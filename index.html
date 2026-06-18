@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#fffbf0">
+<title>Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Syne:wght@600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fffbf0;--surface:#ffffff;--surface2:#fdf6e8;
+  --hero1:#c47009;--hero2:#e8960c;--hero3:#d4820a;
+  --gold:#c47009;--gold-light:#e8960c;--gold-soft:rgba(196,112,9,0.08);
+  --ink:#1a1200;--ink2:#4a3800;--ink3:#8a6a20;--muted:#bba060;
+  --border:rgba(196,112,9,0.12);
+  --green:#16a34a;--green-bg:rgba(74,222,128,0.12);
+  --red:#dc2626;--red-bg:rgba(248,113,113,0.1);
+  --yellow:#c47009;--yellow-bg:rgba(251,191,36,0.15);
+  --font:'Inter',sans-serif;--display:'Syne',sans-serif;--mono:'DM Mono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{overflow-x:hidden;}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);min-height:100vh;max-width:520px;margin:0 auto;position:relative;padding-bottom:84px;}
+::-webkit-scrollbar{width:0;display:none;}
+.onboard{position:fixed;inset:0;max-width:520px;margin:0 auto;background:linear-gradient(160deg,#d4820a 0%,#b86407 100%);z-index:1000;display:flex;flex-direction:column;justify-content:center;padding:32px;color:#fff;}
+.onboard.hidden{display:none;}
+.ob-logo{font-family:var(--display);font-size:42px;font-weight:800;letter-spacing:-1px;margin-bottom:6px;}
+.ob-tagline{font-size:13px;opacity:0.8;font-family:var(--mono);letter-spacing:1px;margin-bottom:40px;}
+.ob-field{margin-bottom:18px;}
+.ob-label{font-size:11px;opacity:0.7;font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;display:block;}
+.ob-input{width:100%;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);border-radius:14px;padding:15px 16px;font-size:16px;color:#fff;font-family:var(--font);outline:none;transition:border-color 0.2s;}
+.ob-input::placeholder{color:rgba(255,255,255,0.5);}
+.ob-input:focus{border-color:#fff;}
+.ob-pin-row{display:flex;gap:10px;justify-content:center;}
+.ob-pin-input{flex:1;height:58px;max-width:64px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.25);border-radius:14px;text-align:center;font-size:22px;color:#fff;font-family:var(--mono);outline:none;transition:border-color 0.2s;}
+.ob-pin-input:focus{border-color:#fff;}
+.ob-btn{width:100%;padding:16px;background:#fff;color:var(--gold);border:none;border-radius:14px;font-size:15px;font-weight:700;font-family:var(--font);cursor:pointer;margin-top:20px;transition:transform 0.15s;}
+.ob-btn:active{transform:scale(0.98);}
+.ob-note{font-size:11px;opacity:0.6;text-align:center;margin-top:16px;font-family:var(--mono);line-height:1.6;}
+.ob-error{font-size:12px;color:#ffe0e0;margin-top:10px;text-align:center;min-height:16px;}
+.app-content{display:none;}
+.app-content.ready{display:block;}
+.topbar{padding:16px 20px 0;}
+.greeting{font-size:13px;color:var(--muted);}
+.greeting-name{font-family:var(--display);font-size:24px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;}
+.page{display:none;animation:fadeIn 0.25s ease;}
+.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.month-nav{display:flex;align-items:center;justify-content:center;margin:14px 20px 0;background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.month-btn{padding:10px 18px;background:none;border:none;color:var(--gold);font-size:18px;cursor:pointer;}
+.month-display{flex:1;text-align:center;padding:10px;font-size:13px;font-weight:700;font-family:var(--mono);border-left:1px solid var(--border);border-right:1px solid var(--border);}
+.hero{margin:14px 16px 0;border-radius:24px;padding:22px;background:linear-gradient(135deg,var(--hero1) 0%,var(--hero2) 50%,var(--hero3) 100%);position:relative;overflow:hidden;box-shadow:0 10px 36px rgba(196,112,9,0.3);}
+.hero::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,220,100,0.28) 0%,transparent 70%);border-radius:50%;}
+.hero::after{content:'';position:absolute;bottom:-40px;left:-20px;width:130px;height:130px;background:radial-gradient(circle,rgba(255,255,255,0.1) 0%,transparent 70%);border-radius:50%;}
+.hero-label{font-size:10px;color:rgba(255,255,255,0.6);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;position:relative;z-index:1;}
+.hero-amount{font-family:var(--display);font-size:38px;font-weight:800;color:#fff;letter-spacing:-1.5px;margin-bottom:4px;position:relative;z-index:1;}
+.hero-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:18px;position:relative;z-index:1;}
+.hero-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;position:relative;z-index:1;}
+.hero-stat{background:rgba(0,0,0,0.13);border-radius:12px;padding:11px;}
+.hero-stat-val{font-family:var(--mono);font-size:14px;font-weight:500;color:#fff;margin-bottom:2px;}
+.hero-stat-label{font-size:8.5px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;text-transform:uppercase;}
+.section{padding:18px 16px 0;}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.section-title{font-size:14px;font-weight:700;color:var(--ink);}
+.section-link{font-size:11px;color:var(--gold);font-weight:600;cursor:pointer;}
+.section-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
+.insight-scroll{display:flex;gap:10px;overflow-x:auto;padding:0 16px 4px;margin:0 -16px;}
+.insight-card{flex-shrink:0;width:180px;border-radius:14px;padding:14px;border:1px solid;}
+.ins-gold{background:var(--gold-soft);border-color:rgba(196,112,9,0.2);}
+.ins-yellow{background:var(--yellow-bg);border-color:rgba(251,191,36,0.25);}
+.ins-green{background:var(--green-bg);border-color:rgba(74,222,128,0.25);}
+.ins-red{background:var(--red-bg);border-color:rgba(248,113,113,0.25);}
+.ins-icon{font-size:18px;margin-bottom:8px;}
+.ins-text{font-size:12px;font-weight:500;line-height:1.4;color:var(--ink2);}
+.ins-tag{display:inline-block;margin-top:8px;font-size:8px;font-family:var(--mono);padding:2px 7px;border-radius:20px;background:rgba(0,0,0,0.05);color:var(--muted);letter-spacing:0.5px;}
+.cat-row{display:flex;align-items:center;gap:11px;margin-bottom:13px;}
+.cat-ico{width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.cat-inf{flex:1;min-width:0;}
+.cat-nr{display:flex;justify-content:space-between;margin-bottom:5px;}
+.cat-nm{font-size:12.5px;font-weight:600;color:var(--ink);}
+.cat-am{font-size:12.5px;font-weight:700;font-family:var(--mono);}
+.cat-bg{height:3px;background:rgba(196,112,9,0.1);border-radius:2px;overflow:hidden;}
+.cat-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+.tx{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.tx:last-child{border-bottom:none;}
+.tx-ico{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.tx-inf{flex:1;min-width:0;}
+.tx-nm{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tx-mt{font-size:10px;color:var(--muted);font-family:var(--mono);display:flex;gap:6px;align-items:center;margin-top:2px;flex-wrap:wrap;}
+.tx-badge{padding:1px 5px;border-radius:4px;font-size:8px;font-weight:700;letter-spacing:0.5px;}
+.b-sms{background:rgba(34,211,238,0.15);color:#0891b2;}
+.b-gmail{background:rgba(234,67,53,0.12);color:#dc2626;}
+.b-manual{background:var(--gold-soft);color:var(--gold);}
+.b-stmt{background:rgba(99,102,241,0.12);color:#6366f1;}
+.b-dup{background:var(--yellow-bg);color:var(--gold);}
+.tx-rt{text-align:right;flex-shrink:0;}
+.tx-am{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--red);white-space:nowrap;}
+.tx-am.credit{color:var(--green);}
+.tx-dt{font-size:9px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.empty{padding:50px 24px;text-align:center;}
+.empty-ico{font-size:42px;margin-bottom:14px;opacity:0.4;}
+.empty-title{font-size:15px;font-weight:700;color:var(--ink2);margin-bottom:6px;}
+.empty-sub{font-size:12px;color:var(--muted);font-family:var(--mono);line-height:1.6;}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;height:78px;display:flex;align-items:center;justify-content:space-around;padding:0 8px 14px;background:rgba(255,251,240,0.96);backdrop-filter:blur(20px);border-top:1px solid var(--border);z-index:90;}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding-top:12px;}
+.nav-ico{font-size:19px;opacity:0.3;transition:opacity 0.2s;}
+.nav-btn.active .nav-ico{opacity:1;}
+.nav-lbl{font-size:8.5px;font-weight:700;letter-spacing:0.3px;color:var(--muted);}
+.nav-btn.active .nav-lbl{color:var(--gold);}
+.fab{position:fixed;bottom:94px;right:calc(50% - 260px + 20px);width:54px;height:54px;border-radius:18px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border:none;font-size:26px;cursor:pointer;box-shadow:0 8px 24px rgba(196,112,9,0.4);z-index:91;display:flex;align-items:center;justify-content:center;transition:transform 0.15s;}
+@media (max-width:540px){.fab{right:20px;}}
+.fab:active{transform:scale(0.92);}
+.page-header{padding:16px 20px 12px;}
+.page-title{font-family:var(--display);font-size:26px;font-weight:800;color:var(--ink);letter-spacing:-0.5px;}
+.page-subtitle{font-size:12px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.search{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:11px 14px;margin:0 20px 12px;}
+.search input{flex:1;border:none;background:none;outline:none;font-size:13px;font-family:var(--font);color:var(--ink);}
+.filters{display:flex;gap:7px;overflow-x:auto;padding:0 20px 4px;}
+.chip{padding:6px 13px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;flex-shrink:0;font-family:var(--font);}
+.chip.active{background:var(--gold-soft);border-color:rgba(196,112,9,0.4);color:var(--gold);}
+.date-label{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;padding:14px 20px 4px;}
+.tx-container{padding:0 20px;}
+.sheet-overlay{position:fixed;inset:0;max-width:520px;margin:0 auto;background:rgba(26,18,0,0.4);backdrop-filter:blur(6px);z-index:200;display:none;align-items:flex-end;}
+.sheet-overlay.open{display:flex;}
+.sheet{width:100%;background:var(--bg);border-radius:26px 26px 0 0;padding:22px 20px 30px;max-height:90vh;overflow-y:auto;animation:sheetUp 0.3s cubic-bezier(0.16,1,0.3,1);}
+@keyframes sheetUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.sheet-handle{width:40px;height:4px;background:rgba(196,112,9,0.25);border-radius:2px;margin:0 auto 18px;}
+.sheet-title{font-family:var(--display);font-size:20px;font-weight:800;color:var(--ink);margin-bottom:4px;}
+.sheet-sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:20px;}
+.field{margin-bottom:16px;}
+.field-label{font-size:10px;color:var(--ink3);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px;display:block;}
+.field-input,.field-select{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:13px 15px;font-size:15px;color:var(--ink);font-family:var(--font);outline:none;transition:border-color 0.2s;}
+.field-input:focus,.field-select:focus{border-color:var(--gold);}
+.field-input.mono{font-family:var(--mono);}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.toggle-row{display:flex;gap:8px;margin-bottom:16px;}
+.toggle-btn{flex:1;padding:11px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font);text-align:center;transition:all 0.15s;}
+.toggle-btn.active{background:var(--gold);color:#fff;border-color:var(--gold);}
+.toggle-btn.income.active{background:var(--green);border-color:var(--green);}
+.sheet-actions{display:flex;gap:10px;margin-top:8px;}
+.btn-primary{flex:1;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:13px;font-size:14px;font-weight:700;color:#fff;cursor:pointer;font-family:var(--font);transition:transform 0.15s;}
+.btn-primary:active{transform:scale(0.98);}
+.btn-ghost{padding:15px 20px;background:var(--surface);border:1.5px solid var(--border);border-radius:13px;font-size:14px;font-weight:600;color:var(--ink2);cursor:pointer;font-family:var(--font);}
+.btn-danger{background:var(--red-bg);border:1px solid rgba(248,113,113,0.3);color:var(--red);}
+.paste-area{width:100%;min-height:120px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:14px;font-size:13px;color:var(--ink);font-family:var(--mono);outline:none;resize:vertical;line-height:1.6;}
+.paste-area:focus{border-color:var(--gold);}
+.upload-zone{border:2px dashed rgba(196,112,9,0.3);border-radius:14px;padding:28px;text-align:center;cursor:pointer;background:var(--gold-soft);transition:all 0.2s;}
+.upload-ico{font-size:30px;margin-bottom:10px;}
+.upload-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.upload-sub{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.parse-result{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-top:14px;}
+.parse-signal{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.parse-signal:last-child{border-bottom:none;}
+.signal-ico{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.signal-body{flex:1;}
+.signal-title{font-size:12px;font-weight:700;color:var(--ink);}
+.signal-detail{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;line-height:1.5;}
+.conf-badge{font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:20px;background:var(--green-bg);color:var(--green);font-weight:700;}
+.conf-badge.med{background:var(--yellow-bg);color:var(--gold);}
+.nw-hero{margin:14px 16px 0;border-radius:24px;padding:22px;position:relative;overflow:hidden;background:linear-gradient(135deg,var(--hero1),var(--hero2));box-shadow:0 10px 36px rgba(196,112,9,0.3);}
+.nw-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:radial-gradient(circle,rgba(255,220,100,0.25) 0%,transparent 70%);border-radius:50%;}
+.nw-label{font-size:10px;color:rgba(255,255,255,0.6);font-family:var(--mono);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;position:relative;z-index:1;}
+.nw-amount{font-family:var(--display);font-size:34px;font-weight:800;color:#fff;letter-spacing:-1.5px;margin-bottom:4px;position:relative;z-index:1;}
+.nw-updated{font-size:10px;color:rgba(255,255,255,0.5);font-family:var(--mono);margin-bottom:18px;position:relative;z-index:1;}
+.nw-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative;z-index:1;}
+.nw-split-card{background:rgba(0,0,0,0.13);border-radius:12px;padding:12px;}
+.nw-split-val{font-family:var(--mono);font-size:15px;font-weight:500;margin-bottom:2px;color:#fff;}
+.nw-split-val.liab{color:#ffd4d4;}
+.nw-split-label{font-size:8.5px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;text-transform:uppercase;}
+.liq-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;display:flex;gap:16px;align-items:center;}
+.liq-ring{position:relative;width:84px;height:84px;flex-shrink:0;}
+.liq-ring svg{transform:rotate(-90deg);}
+.liq-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.liq-pct{font-size:15px;font-weight:800;font-family:var(--mono);color:var(--ink);}
+.liq-sub{font-size:7px;color:var(--muted);letter-spacing:0.5px;}
+.liq-legend{flex:1;}
+.liq-item{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
+.liq-item:last-child{margin-bottom:0;}
+.liq-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.liq-name{font-size:11px;color:var(--ink2);flex:1;font-weight:500;}
+.liq-val{font-size:11px;font-family:var(--mono);color:var(--ink3);font-weight:600;}
+.asset-cat{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin-bottom:10px;overflow:hidden;}
+.asset-cat-head{display:flex;align-items:center;gap:11px;padding:14px;cursor:pointer;}
+.asset-cat-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.asset-cat-info{flex:1;min-width:0;}
+.asset-cat-name{font-size:13px;font-weight:700;color:var(--ink);}
+.asset-cat-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.asset-cat-amt{text-align:right;}
+.asset-cat-val{font-size:14px;font-weight:800;font-family:var(--mono);color:var(--gold);}
+.asset-cat-pct{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.asset-cat-chev{font-size:11px;color:var(--muted);margin-left:6px;transition:transform 0.2s;}
+.asset-cat.expanded .asset-cat-chev{transform:rotate(90deg);}
+.asset-items{display:none;border-top:1px solid var(--border);}
+.asset-cat.expanded .asset-items{display:block;}
+.asset-item{display:flex;align-items:center;gap:10px;padding:12px 14px 12px 18px;border-bottom:1px solid var(--border);}
+.asset-item:last-child{border-bottom:none;}
+.asset-item-inf{flex:1;min-width:0;}
+.asset-item-name{font-size:12px;font-weight:600;color:var(--ink2);}
+.asset-item-meta{font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:2px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;}
+.asset-item-rt{text-align:right;}
+.asset-item-val{font-size:13px;font-weight:700;font-family:var(--mono);color:var(--ink);}
+.asset-item-val.liab{color:var(--red);}
+.asset-item-date{font-size:8px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.edit-dot{width:28px;height:28px;border-radius:8px;background:var(--gold-soft);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--gold);cursor:pointer;flex-shrink:0;}
+.fresh{padding:1px 6px;border-radius:20px;font-size:8px;font-weight:700;background:var(--green-bg);color:var(--green);font-family:var(--mono);letter-spacing:0.3px;}
+.stale{padding:1px 6px;border-radius:20px;font-size:8px;font-weight:700;background:var(--yellow-bg);color:var(--gold);font-family:var(--mono);letter-spacing:0.3px;}
+.add-btn{margin:6px 16px 0;padding:14px;border-radius:13px;border:1.5px dashed rgba(196,112,9,0.3);background:var(--gold-soft);text-align:center;font-size:13px;font-weight:700;color:var(--gold);cursor:pointer;}
+.gmail-card{margin:0 16px 14px;border-radius:18px;padding:18px;background:linear-gradient(135deg,rgba(234,67,53,0.08),rgba(234,67,53,0.03));border:1px solid rgba(234,67,53,0.2);}
+.gmail-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.gmail-name{display:flex;align-items:center;gap:10px;}
+.gmail-lbl{font-size:13px;font-weight:700;color:var(--ink);}
+.gmail-addr{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.live-dot{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--green);font-weight:600;}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+.sync-card{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;}
+.sync-card-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;}
+.sync-card-sub{font-size:11px;color:var(--muted);font-family:var(--mono);line-height:1.6;margin-bottom:14px;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translate(-50%,80px);background:var(--ink);color:#fff;padding:13px 20px;border-radius:14px;font-size:13px;font-weight:600;z-index:500;opacity:0;transition:all 0.3s;max-width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:flex;align-items:center;gap:8px;}
+.toast.show{transform:translate(-50%,0);opacity:1;}
+.toast.success{background:#15803d;}
+.toast.error{background:#b91c1c;}
+.setting-group{margin:0 16px 16px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.setting-item{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--border);cursor:pointer;}
+.setting-item:last-child{border-bottom:none;}
+.setting-ico{font-size:18px;width:24px;text-align:center;}
+.setting-label{flex:1;font-size:13px;font-weight:600;color:var(--ink);}
+.chart-card{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;}
+.chart-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.chart-amount{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--gold);margin-bottom:16px;}
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.bar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height 0.6s ease;}
+.bar-lbl{font-size:8px;color:var(--muted);font-family:var(--mono);}
+.an-card{margin:0 16px 10px;border-radius:16px;padding:16px;border:1px solid;display:flex;gap:12px;align-items:flex-start;}
+.an-w{background:var(--yellow-bg);border-color:rgba(251,191,36,0.25);}
+.an-r{background:var(--red-bg);border-color:rgba(248,113,113,0.25);}
+.an-s{background:var(--green-bg);border-color:rgba(74,222,128,0.25);}
+.an-g{background:var(--gold-soft);border-color:rgba(196,112,9,0.25);}
+.an-ico{font-size:20px;flex-shrink:0;}
+.an-title{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.an-desc{font-size:11px;color:var(--ink2);line-height:1.5;opacity:0.8;}
+
+/* ===== V2 ADDITIONS ===== */
+.progress-wrap{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:none;}
+.progress-wrap.show{display:block;}
+.progress-label{font-size:12px;font-weight:600;color:var(--ink);margin-bottom:10px;display:flex;justify-content:space-between;}
+.progress-track{height:6px;background:rgba(196,112,9,0.12);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:3px;width:0%;transition:width 0.2s;}
+.review-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;margin:0 0 10px;padding:14px;}
+.review-card.dup{border-color:rgba(251,191,36,0.3);background:var(--yellow-bg);}
+.review-top{display:flex;align-items:center;gap:11px;margin-bottom:10px;}
+.review-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.review-inf{flex:1;min-width:0;}
+.review-nm{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.review-mt{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.review-amt{font-size:14px;font-weight:700;font-family:var(--mono);}
+.review-reason{font-size:10px;color:var(--gold);font-family:var(--mono);margin-bottom:10px;background:var(--gold-soft);padding:5px 9px;border-radius:8px;display:inline-block;}
+.review-cats{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;}
+.review-cat-btn{padding:6px 11px;border-radius:18px;font-size:11px;font-weight:600;white-space:nowrap;border:1px solid var(--border);background:var(--bg);color:var(--ink2);cursor:pointer;flex-shrink:0;font-family:var(--font);}
+.review-cat-btn:active{background:var(--gold);color:#fff;}
+.review-actions{display:flex;gap:8px;}
+.review-act{flex:1;text-align:center;padding:9px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;}
+.ra-yes{background:var(--green-bg);border-color:rgba(74,222,128,0.3);color:var(--green);}
+.ra-no{background:var(--red-bg);border-color:rgba(248,113,113,0.3);color:var(--red);}
+.sort-row{display:flex;flex-direction:column;gap:8px;}
+.sort-opt{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2);}
+.sort-opt.active{border-color:var(--gold);color:var(--gold);background:var(--gold-soft);}
+.sort-check{color:var(--gold);font-weight:700;}
+.vlist{position:relative;}
+.vlist-spacer{width:100%;}
+
+
+.coverage-box{margin-top:16px;}
+.coverage-title{font-size:10px;color:var(--muted);font-family:var(--mono);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px;}
+.coverage-table{border:1px solid var(--border);border-radius:12px;overflow:hidden;}
+.coverage-row{display:flex;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.coverage-row:last-child{border-bottom:none;}
+.coverage-row.head{background:var(--gold-soft);font-weight:700;color:var(--gold);font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;}
+.coverage-month{font-weight:600;color:var(--ink2);}
+.coverage-count{font-family:var(--mono);color:var(--ink3);font-weight:600;}
+.coverage-empty{font-size:11px;color:var(--muted);font-family:var(--mono);padding:14px;text-align:center;border:1px dashed var(--border);border-radius:12px;}
+.coverage-gap{background:var(--yellow-bg);color:var(--gold);font-size:9px;font-family:var(--mono);text-align:center;padding:5px;letter-spacing:0.5px;}
+
+
+.insight-stack{display:flex;flex-direction:column;gap:10px;}
+.insight-rect{border-radius:14px;padding:15px 16px;border:1px solid;display:flex;align-items:flex-start;gap:12px;}
+.ins-rect-gold{background:var(--gold-soft);border-color:rgba(196,112,9,0.2);}
+.ins-rect-yellow{background:var(--yellow-bg);border-color:rgba(251,191,36,0.25);}
+.ins-rect-green{background:var(--green-bg);border-color:rgba(74,222,128,0.25);}
+.ins-rect-red{background:var(--red-bg);border-color:rgba(248,113,113,0.25);}
+.ins-rect-ico{font-size:20px;flex-shrink:0;margin-top:1px;}
+.ins-rect-body{flex:1;}
+.ins-rect-text{font-size:13px;font-weight:600;color:var(--ink2);line-height:1.4;}
+.ins-rect-tag{display:inline-block;margin-top:6px;font-size:8px;font-family:var(--mono);padding:2px 7px;border-radius:20px;background:rgba(0,0,0,0.06);color:var(--muted);letter-spacing:0.5px;}
+
+
+.import-group-label{font-size:11px;font-weight:800;color:var(--gold);font-family:var(--display);letter-spacing:1px;text-transform:uppercase;margin:18px 16px 10px;padding-bottom:6px;border-bottom:2px solid var(--border);}
+
+
+/* ===== TXN INCOME/EXPENSE TOGGLE ===== */
+.mode-toggle{display:flex;gap:0;margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;padding:3px;}
+.mode-btn{flex:1;padding:11px;text-align:center;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:11px;font-family:var(--font);transition:all 0.15s;}
+.mode-btn.active{background:var(--gold);color:#fff;}
+.mode-btn.income.active{background:var(--green);}
+/* ===== DUPLICATE SIDE-BY-SIDE ===== */
+.dup-pair{background:var(--yellow-bg);border:1px solid rgba(251,191,36,0.35);border-radius:16px;padding:15px;margin:0 0 12px;}
+.dup-head{font-size:11px;font-weight:800;color:var(--gold);font-family:var(--mono);letter-spacing:1px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.dup-cards{display:flex;gap:10px;margin-bottom:14px;}
+.dup-card{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0;}
+.dup-card-nm{font-size:12px;font-weight:700;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dup-card-row{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px;}
+.dup-card-amt{font-size:15px;font-weight:800;font-family:var(--mono);margin-top:6px;}
+.dup-card-src{display:inline-block;margin-top:6px;font-size:8px;font-family:var(--mono);padding:2px 7px;border-radius:20px;background:var(--gold-soft);color:var(--gold);letter-spacing:0.5px;}
+.dup-actions{display:flex;gap:7px;}
+.dup-act{flex:1;text-align:center;padding:10px 6px;border-radius:10px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid;font-family:var(--font);}
+.dup-keep-l{background:var(--green-bg);border-color:rgba(74,222,128,0.3);color:var(--green);}
+.dup-keep-both{background:var(--gold-soft);border-color:rgba(196,112,9,0.3);color:var(--gold);}
+.dup-keep-r{background:var(--green-bg);border-color:rgba(74,222,128,0.3);color:var(--green);}
+/* ===== HERO 3-BOX FORMULA ===== */
+.hero-formula{display:flex;align-items:center;gap:6px;position:relative;z-index:1;}
+.hero-fbox{flex:1;background:rgba(0,0,0,0.13);border-radius:12px;padding:11px 8px;text-align:center;}
+.hero-fbox-val{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff;margin-bottom:2px;}
+.hero-fbox-val.net-pos{color:#b6f5c8;}
+.hero-fbox-val.net-neg{color:#ffd0d0;}
+.hero-fbox-label{font-size:8px;color:rgba(255,255,255,0.55);letter-spacing:0.5px;text-transform:uppercase;}
+.hero-fsign{font-size:16px;font-weight:700;color:rgba(255,255,255,0.7);flex-shrink:0;align-self:center;}
+/* ===== WEALTH: as-of, trend, account graph ===== */
+.asof{font-size:8px;font-family:var(--mono);color:var(--muted);}
+.nw-trend-card{margin:0 16px 14px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;}
+.nw-trend-title{font-size:12px;font-weight:700;color:var(--ink);margin-bottom:3px;}
+.nw-trend-amt{font-family:var(--mono);font-size:18px;font-weight:500;color:var(--gold);margin-bottom:14px;}
+.asset-item.tappable{cursor:pointer;}
+.acct-graph-wrap{padding:0 4px;}
+.acct-stat{display:flex;justify-content:space-between;font-size:11px;font-family:var(--mono);color:var(--ink3);padding:6px 0;border-bottom:1px solid var(--border);}
+.acct-stat:last-child{border-bottom:none;}
+.acct-stat b{color:var(--ink);font-weight:700;}
+.graph-empty{padding:30px;text-align:center;font-size:11px;color:var(--muted);font-family:var(--mono);}
+
+.tx.ccpay{opacity:0.5;}
+.tx.ccpay .tx-am{color:var(--muted) !important;font-weight:600;}
+.hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div class="onboard" id="onboard">
+  <div class="ob-logo">Ledger</div>
+  <div class="ob-tagline">your money, beautifully tracked</div>
+  <div class="ob-field"><label class="ob-label">Your Name</label><input class="ob-input" id="obName" type="text" placeholder="Dipak" autocomplete="off"></div>
+  <div class="ob-field"><label class="ob-label">Email</label><input class="ob-input" id="obEmail" type="email" placeholder="you@gmail.com" autocomplete="off"></div>
+  <div class="ob-field"><label class="ob-label">Set a 4-digit PIN</label>
+    <div class="ob-pin-row">
+      <input class="ob-pin-input" id="obPin1" type="tel" maxlength="1" inputmode="numeric">
+      <input class="ob-pin-input" id="obPin2" type="tel" maxlength="1" inputmode="numeric">
+      <input class="ob-pin-input" id="obPin3" type="tel" maxlength="1" inputmode="numeric">
+      <input class="ob-pin-input" id="obPin4" type="tel" maxlength="1" inputmode="numeric">
+    </div>
+  </div>
+  <button class="ob-btn" onclick="createProfile()">Create My Profile →</button>
+  <div class="ob-error" id="obError"></div>
+  <div class="ob-note">Everything is stored privately on this device.<br>No servers. No cloud. 100% yours.</div>
+</div>
+
+<div class="app-content" id="app">
+  <div class="page active" id="page-dashboard">
+    <div class="topbar"><div class="greeting" id="greetingTime">Good morning,</div><div class="greeting-name" id="greetingName">Dipak 👋</div></div>
+    <div class="month-nav"><button class="month-btn" onclick="changeMonth(-1)">‹</button><div class="month-display" id="monthDisplay">May 2026</div><button class="month-btn" onclick="changeMonth(1)">›</button></div>
+    <div class="hero">
+      <div class="hero-label">Total Spent</div>
+      <div class="hero-amount" id="heroAmount">₹0</div>
+      <div class="hero-sub" id="heroSub">this month</div>
+      <div class="hero-formula">
+        <div class="hero-fbox"><div class="hero-fbox-val" id="heroIncome">₹0</div><div class="hero-fbox-label">Income</div></div>
+        <div class="hero-fsign">−</div>
+        <div class="hero-fbox"><div class="hero-fbox-val" id="heroExpense">₹0</div><div class="hero-fbox-label">Expenses</div></div>
+        <div class="hero-fsign">=</div>
+        <div class="hero-fbox"><div class="hero-fbox-val" id="heroSaved">₹0</div><div class="hero-fbox-label">Net Saved</div></div>
+      </div>
+    </div>
+    <div class="section"><div class="section-head"><span class="section-title">Top Categories</span><span class="section-link" onclick="switchPage('categories')">See all →</span></div><div id="dashCategories"></div></div>
+    <div class="section" style="padding-bottom:10px"><div class="section-head"><span class="section-title">Recent</span><span class="section-link" onclick="switchPage('transactions')">All →</span></div><div id="dashRecent"></div></div>
+    <div class="section" id="insightsSection" style="display:none;padding-bottom:24px"><div class="section-label">Smart Insights</div><div id="insightScroll"></div></div>
+  </div>
+
+  <div class="page" id="page-transactions">
+    <div class="page-header"><div class="page-title">Transactions</div><div class="page-subtitle" id="txCount">0 records</div></div>
+    <div class="mode-toggle">
+      <div class="mode-btn active" id="modeExpense" onclick="setTxMode('expense')">Expenses</div>
+      <div class="mode-btn income" id="modeIncome" onclick="setTxMode('income')">Income</div>
+    </div>
+    <div class="search"><span style="color:var(--muted)">⌕</span><input type="text" id="searchInput" placeholder="Search merchants, amounts..." oninput="onSearchInput()"></div>
+    <div style="display:flex;gap:8px;padding:0 20px 10px;overflow-x:auto;">
+      <button class="chip" onclick="openFilterSheet()">⚙ Filters &amp; Sort</button>
+      <button class="chip" id="reviewChip" onclick="toggleReview()">⚑ Review <span id="reviewCount" style="background:var(--gold);color:#fff;border-radius:10px;padding:0 5px;font-size:9px;margin-left:2px;">0</span></button>
+      <button class="chip" id="dupChip" onclick="toggleDupes()">🔁 Dupes <span id="dupCount" style="background:var(--gold);color:#fff;border-radius:10px;padding:0 5px;font-size:9px;margin-left:2px;">0</span></button>
+    </div>
+    <div class="filters" id="txFilters"></div>
+    <div id="reviewList" style="padding:0 16px;display:none;"></div>
+    <div id="dupList" style="padding:0 16px;display:none;"></div>
+    <div id="txFullList"></div>
+  </div>
+
+
+  <div class="page" id="page-categories">
+    <div class="page-header"><div class="page-title">Categories</div><div class="page-subtitle" id="catMonthSub">this month</div></div>
+    <div id="catDetailList" style="padding:0 16px"></div>
+    <div style="height:20px"></div>
+  </div>
+
+  <div class="page" id="page-wealth">
+    <div class="page-header"><div class="page-title">Wealth</div><div class="page-subtitle">your complete net worth</div></div>
+    <div class="nw-hero">
+      <div class="nw-label">Total Net Worth</div>
+      <div class="nw-amount" id="nwAmount">₹0</div>
+      <div class="nw-updated" id="nwUpdated">No assets added yet</div>
+      <div class="nw-split">
+        <div class="nw-split-card"><div class="nw-split-val" id="nwAssets">₹0</div><div class="nw-split-label">↑ Total Assets</div></div>
+        <div class="nw-split-card"><div class="nw-split-val liab" id="nwLiab">₹0</div><div class="nw-split-label">↓ Liabilities</div></div>
+      </div>
+    </div>
+    <div class="nw-trend-card" id="nwTrendCard" style="display:none">
+      <div class="nw-trend-title">Net Worth Trend</div>
+      <div class="nw-trend-amt" id="nwTrendAmt">₹0</div>
+      <div class="bars" id="nwTrendBars"></div>
+    </div>
+    <div class="section" id="liqSection" style="display:none">
+      <div class="section-label">Liquidity Breakdown</div>
+      <div class="liq-card">
+        <div class="liq-ring">
+          <svg width="84" height="84" viewBox="0 0 84 84">
+            <circle cx="42" cy="42" r="34" fill="none" stroke="#f5e6c8" stroke-width="9"/>
+            <circle id="liqRing1" cx="42" cy="42" r="34" fill="none" stroke="#4ade80" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 214"/>
+            <circle id="liqRing2" cx="42" cy="42" r="34" fill="none" stroke="#d4820a" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 214"/>
+            <circle id="liqRing3" cx="42" cy="42" r="34" fill="none" stroke="#dc2626" stroke-width="9" stroke-linecap="round" stroke-dasharray="0 214"/>
+          </svg>
+          <div class="liq-center"><div class="liq-pct" id="liqPct">0%</div><div class="liq-sub">LIQUID</div></div>
+        </div>
+        <div class="liq-legend">
+          <div class="liq-item"><div class="liq-dot" style="background:#4ade80"></div><span class="liq-name">Instant access</span><span class="liq-val" id="liqInstant">₹0</span></div>
+          <div class="liq-item"><div class="liq-dot" style="background:#d4820a"></div><span class="liq-name">1–7 days</span><span class="liq-val" id="liqSemi">₹0</span></div>
+          <div class="liq-item"><div class="liq-dot" style="background:#dc2626"></div><span class="liq-name">Locked / Long term</span><span class="liq-val" id="liqLocked">₹0</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="section"><div class="section-label">Assets</div><div id="assetsList"></div></div>
+    <div class="section" id="liabSection" style="display:none"><div class="section-label" style="color:var(--red);opacity:0.7">Liabilities</div><div id="liabList"></div></div>
+    <div class="add-btn" onclick="openAssetSheet()">＋ Add Asset or Liability</div>
+    <div style="height:20px"></div>
+  </div>
+
+  <div class="page" id="page-insights">
+    <div class="page-header"><div class="page-title">Insights</div><div class="page-subtitle">your money patterns</div></div>
+    <div class="chart-card"><div class="chart-title">6-Month Spend Trend</div><div class="chart-amount" id="trendAmount">₹0</div><div class="bars" id="trendBars"></div></div>
+    <div id="anomalyList"></div>
+    <div style="height:20px"></div>
+  </div>
+
+  <div class="page" id="page-sync">
+    <div class="page-header"><div class="page-title">Import</div><div class="page-subtitle">upload your bank statements</div></div>
+    <div class="progress-wrap" id="progressWrap"><div class="progress-label"><span id="progressText">Importing...</span><span id="progressPct">0%</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
+
+    <div class="import-group-label">Bank Accounts</div>
+    <div class="sync-card">
+      <div class="sync-card-title">🏦 HDFC Bank Statement</div>
+      <div class="sync-card-sub">Upload your HDFC statement as PDF, CSV or Excel (XLS/XLSX). Password-protected PDFs supported.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInput').click()">Upload HDFC Statement</button>
+      <input type="file" id="fileInput" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleFile(event,'HDFC')">
+      <div id="coverage-HDFC" class="coverage-box"></div>
+    </div>
+
+    <div class="import-group-label">Credit Cards</div>
+    <div class="sync-card">
+      <div class="sync-card-title">💳 SBI RuPay Credit Card</div>
+      <div class="sync-card-sub">Upload your Reliance SBI Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputSBICC').click()">Upload SBI Card Statement</button>
+      <input type="file" id="fileInputSBICC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'SBI RuPay CC')">
+      <div id="coverage-SBI RuPay CC" class="coverage-box"></div>
+    </div>
+
+    <div class="sync-card">
+      <div class="sync-card-title">💳 Axis Flipkart Credit Card</div>
+      <div class="sync-card-sub">Upload your Axis Bank Flipkart Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputAxisCC').click()">Upload Axis Card Statement</button>
+      <input type="file" id="fileInputAxisCC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'Axis Flipkart CC')">
+      <div id="coverage-Axis Flipkart CC" class="coverage-box"></div>
+    </div>
+
+    <div class="sync-card">
+      <div class="sync-card-title">💳 HDFC Pixel Credit Card</div>
+      <div class="sync-card-sub">Upload your HDFC Pixel Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputPixelCC').click()">Upload HDFC Pixel Statement</button>
+      <input type="file" id="fileInputPixelCC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'HDFC Pixel CC')">
+      <div id="coverage-HDFC Pixel CC" class="coverage-box"></div>
+    </div>
+
+    <div class="sync-card">
+      <div class="sync-card-title">💳 HDFC IOCL Credit Card</div>
+      <div class="sync-card-sub">Upload your IndianOil HDFC Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputIoclCC').click()">Upload HDFC IOCL Statement</button>
+      <input type="file" id="fileInputIoclCC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'HDFC IOCL CC')">
+      <div id="coverage-HDFC IOCL CC" class="coverage-box"></div>
+    </div>
+
+    <div class="sync-card">
+      <div class="sync-card-title">💳 ICICI Amazon Pay Credit Card</div>
+      <div class="sync-card-sub">Upload your ICICI Amazon Pay Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputAmazonCC').click()">Upload ICICI Amazon Pay Statement</button>
+      <input type="file" id="fileInputAmazonCC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'ICICI Amazon Pay CC')">
+      <div id="coverage-ICICI Amazon Pay CC" class="coverage-box"></div>
+    </div>
+
+    <div class="sync-card">
+      <div class="sync-card-title">💳 ICICI Coral Credit Card</div>
+      <div class="sync-card-sub">Upload your ICICI Coral Card statement (PDF, CSV or XLS). Password-protected PDFs open automatically.</div>
+      <button class="btn-primary" onclick="document.getElementById('fileInputCoralCC').click()">Upload ICICI Coral Statement</button>
+      <input type="file" id="fileInputCoralCC" accept=".csv,.pdf,.txt,.xls,.xlsx" style="display:none" onchange="handleCardFile(event,'ICICI Coral CC')">
+      <div id="coverage-ICICI Coral CC" class="coverage-box"></div>
+    </div>
+
+    <div class="setting-group" style="margin-top:18px">
+      <div class="setting-item" onclick="exportData()"><span class="setting-ico">↓</span><span class="setting-label">Export All Data (CSV)</span></div>
+      <div class="setting-item" onclick="openSettingsSheet()"><span class="setting-ico">⚙</span><span class="setting-label">Settings</span></div>
+    </div>
+    <div style="height:20px"></div>
+    <!-- Gmail stubs kept hidden so existing handlers don't error -->
+    <div class="hidden"><span id="gmailStatus"></span><span id="gmailLive"></span><span id="gmailDisconnected"></span><span id="gmailConnected"></span></div>
+  </div>
+</div>
+
+
+<button class="fab hidden" id="fab" onclick="openAddSheet()">＋</button>
+
+<div class="bottom-nav hidden" id="bottomNav">
+  <div class="nav-btn active" data-page="dashboard" onclick="switchPage('dashboard')"><div class="nav-ico">⬡</div><div class="nav-lbl">Home</div></div>
+  <div class="nav-btn" data-page="transactions" onclick="switchPage('transactions')"><div class="nav-ico">≡</div><div class="nav-lbl">Txns</div></div>
+  <div class="nav-btn" data-page="wealth" onclick="switchPage('wealth')"><div class="nav-ico">◆</div><div class="nav-lbl">Wealth</div></div>
+  <div class="nav-btn" data-page="insights" onclick="switchPage('insights')"><div class="nav-ico">◎</div><div class="nav-lbl">Insights</div></div>
+  <div class="nav-btn" data-page="sync" onclick="switchPage('sync')"><div class="nav-ico">⟳</div><div class="nav-lbl">Sync</div></div>
+</div>
+
+<div class="sheet-overlay" id="addSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="addSheetTitle">Add Transaction</div>
+  <div class="sheet-sub">record an expense or income</div>
+  <div class="toggle-row"><button class="toggle-btn active" id="toggleExpense" onclick="setTxType('expense')">Expense</button><button class="toggle-btn income" id="toggleIncome" onclick="setTxType('income')">Income</button></div>
+  <div class="field"><label class="field-label">Description</label><input class="field-input" id="addName" placeholder="e.g. Swiggy, Petrol..."></div>
+  <div class="field-row"><div class="field"><label class="field-label">Amount</label><input class="field-input mono" id="addAmount" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label class="field-label">Date</label><input class="field-input" id="addDate" type="date"></div></div>
+  <div class="field"><label class="field-label">Category</label><select class="field-select" id="addCategory"></select></div>
+  <input type="hidden" id="editTxId">
+  <div class="sheet-actions"><button class="btn-ghost" onclick="closeSheet('addSheet')">Cancel</button><button class="btn-primary" onclick="saveTransaction()">Save</button></div>
+  <div id="deleteRow" style="margin-top:12px"></div>
+</div></div>
+
+<div class="sheet-overlay" id="pasteSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Paste SMS or Email</div>
+  <div class="sheet-sub">Ledger reads it automatically</div>
+  <textarea class="paste-area" id="pasteText" placeholder="Paste your bank SMS here..."></textarea>
+  <div id="parseResult"></div>
+  <div class="sheet-actions" style="margin-top:14px"><button class="btn-ghost" onclick="closeSheet('pasteSheet')">Cancel</button><button class="btn-primary" id="parseBtn" onclick="parseAndPreview()">Read Text</button></div>
+</div></div>
+
+<div class="sheet-overlay" id="acctSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="acctSheetTitle">Account</div>
+  <div class="sheet-sub" id="acctSheetSub">balance over time</div>
+  <div class="acct-graph-wrap"><div id="acctGraph"></div></div>
+  <div id="acctStats" style="margin-top:14px"></div>
+  <div class="sheet-actions" style="margin-top:16px"><button class="btn-ghost" style="width:100%" onclick="closeSheet('acctSheet')">Close</button></div>
+</div></div>
+
+<div class="sheet-overlay" id="assetSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title" id="assetSheetTitle">Add Asset</div>
+  <div class="sheet-sub">track your wealth</div>
+  <div class="toggle-row"><button class="toggle-btn active" id="toggleAsset" onclick="setAssetType('asset')">Asset</button><button class="toggle-btn" id="toggleLiab" onclick="setAssetType('liability')">Liability</button></div>
+  <div class="field"><label class="field-label">Name</label><input class="field-input" id="assetName" placeholder="e.g. HDFC Savings, Gold..."></div>
+  <div class="field-row"><div class="field"><label class="field-label">Current Value</label><input class="field-input mono" id="assetValue" type="number" inputmode="decimal" placeholder="0"></div><div class="field"><label class="field-label">Category</label><select class="field-select" id="assetCategory"></select></div></div>
+  <div class="field"><label class="field-label">Notes (optional)</label><input class="field-input" id="assetNotes" placeholder="A/C number, fund name..."></div>
+  <input type="hidden" id="editAssetId">
+  <div class="sheet-actions"><button class="btn-ghost" onclick="closeSheet('assetSheet')">Cancel</button><button class="btn-primary" onclick="saveAsset()">Save</button></div>
+  <div id="assetDeleteRow" style="margin-top:12px"></div>
+</div></div>
+
+<div class="sheet-overlay" id="settingsSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Settings</div>
+  <div class="sheet-sub">configure your app</div>
+  <input type="hidden" id="setClientId">
+  <div class="field"><label class="field-label">Your Name</label><input class="field-input" id="setName"></div>
+  <div class="field"><label class="field-label">Monthly Budget (optional)</label><input class="field-input mono" id="setBudget" type="number" inputmode="decimal" placeholder="50000"></div>
+  <div class="sheet-actions"><button class="btn-ghost" onclick="closeSheet('settingsSheet')">Cancel</button><button class="btn-primary" onclick="saveSettings()">Save</button></div>
+  <div style="margin-top:14px"><button class="btn-ghost" style="width:100%;border-color:rgba(196,112,9,0.4);color:var(--gold)" onclick="clearTransactionsOnly()">↻ Clear Transactions Only (keep profile &amp; wealth)</button></div>
+  <div style="margin-top:10px"><button class="btn-ghost btn-danger" style="width:100%" onclick="clearAllData()">⚠ Clear All Data</button></div>
+</div></div>
+
+<div class="sheet-overlay" id="filterSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Filters &amp; Sort</div>
+  <div class="sheet-sub">refine your transaction list</div>
+  <div class="field"><label class="field-label">Sort By</label>
+    <div class="sort-row" id="sortOptions">
+      <div class="sort-opt active" data-sort="date_desc" onclick="setSort('date_desc',this)"><span>Newest first</span><span class="sort-check">✓</span></div>
+      <div class="sort-opt" data-sort="date_asc" onclick="setSort('date_asc',this)"><span>Oldest first</span><span class="sort-check"></span></div>
+      <div class="sort-opt" data-sort="amt_desc" onclick="setSort('amt_desc',this)"><span>Amount: High → Low</span><span class="sort-check"></span></div>
+      <div class="sort-opt" data-sort="amt_asc" onclick="setSort('amt_asc',this)"><span>Amount: Low → High</span><span class="sort-check"></span></div>
+      <div class="sort-opt" data-sort="az" onclick="setSort('az',this)"><span>Name: A → Z</span><span class="sort-check"></span></div>
+      <div class="sort-opt" data-sort="za" onclick="setSort('za',this)"><span>Name: Z → A</span><span class="sort-check"></span></div>
+    </div>
+  </div>
+  <div class="field-row">
+    <div class="field"><label class="field-label">From Date</label><input class="field-input" id="filterFrom" type="date"></div>
+    <div class="field"><label class="field-label">To Date</label><input class="field-input" id="filterTo" type="date"></div>
+  </div>
+  <div class="sheet-actions"><button class="btn-ghost" onclick="clearFilters()">Clear</button><button class="btn-primary" onclick="applyFilters()">Apply</button></div>
+</div></div>
+
+<div class="sheet-overlay" id="passwordSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">🔒 PDF is Password Protected</div>
+  <div class="sheet-sub">enter the password to unlock &amp; read it</div>
+  <div class="field"><label class="field-label">PDF Password</label><input class="field-input" id="pdfPassword" type="password" placeholder="usually name+DOB or PAN"></div>
+  <div class="sheet-actions"><button class="btn-ghost" onclick="closeSheet('passwordSheet')">Cancel</button><button class="btn-primary" onclick="submitPdfPassword()">Unlock &amp; Read</button></div>
+  <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:12px;line-height:1.6;">The password is used once to unlock the file in your browser, then forgotten. Never stored or sent anywhere.</div>
+</div></div>
+
+<div class="sheet-overlay" id="cardPasswordSheet"><div class="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">🔒 Card Statement Password</div>
+  <div class="sheet-sub">the saved password didn't work — enter it manually</div>
+  <div class="field"><label class="field-label">PDF Password</label><input class="field-input" id="cardPdfPassword" type="password" placeholder="statement password"></div>
+  <div class="sheet-actions"><button class="btn-ghost" onclick="closeSheet('cardPasswordSheet')">Cancel</button><button class="btn-primary" onclick="submitCardPdfPassword()">Unlock &amp; Read</button></div>
+  <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:12px;line-height:1.6;">Used once to unlock in your browser, then forgotten. Never stored or sent anywhere.</div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+<script>
+// ===== ENGINE V2 (embedded, tested 35/35) =====
+// ============================================================
+// LEDGER ENGINE V2 — parser + statement + storage logic
+// ============================================================
+
+const EXPENSE_CATEGORIES=[
+{id:'groceries',name:'Groceries',icon:'🛒',color:'#16a34a',keywords:['bigbasket','blinkit','instamart','zepto','grocery','dmart','reliance fresh','more retail','supermarket','vegetable','fruits','jiomart','star bazaar','spencer']},
+{id:'eatingout',name:'Eating Out',icon:'🍽',color:'#dc2626',keywords:['swiggy','zomato','dominos','pizza','mcdonald','kfc','restaurant','cafe','starbucks','dunkin','barbeque','biryani','eatfit','faasos','box8','behrouz','hotel','dhaba','bakery']},
+{id:'transport',name:'Transport & Fuel',icon:'🚗',color:'#ea580c',keywords:['uber','ola','rapido','petrol','diesel','fuel','hpcl','iocl','bpcl','shell','indian oil','bharat petroleum','metro','redbus','parking','fastag','toll','yulu','bounce','travels','motor']},
+{id:'shopping',name:'Shopping',icon:'🛍',color:'#ca8a04',keywords:['amazon','flipkart','myntra','ajio','nykaa','meesho','tata cliq','reliance digital','croma','lifestyle','pantaloons','westside','decathlon','ikea','olx']},
+{id:'utilities',name:'Utilities & Rent',icon:'⚡',color:'#0891b2',keywords:['electricity','water bill','gas','broadband','wifi','internet','airtel','jio','vodafone','bsnl','act fibernet','tata power','adani','bescom','mseb','apdcl','cesc','tneb','kseb','mepdcl','discom','electricity board','rent','recharge','dth','tata sky']},
+{id:'repair',name:'Repair & Maintenance',icon:'🔧',color:'#9333ea',keywords:['service center','servicing','repair','maintenance','plumber','electrician','urban company','urbanclap','car service','bike service','spare parts','garage','mechanic']},
+{id:'health',name:'Health & Hygiene',icon:'💊',color:'#6366f1',keywords:['hospital','clinic','pharmacy','apollo','1mg','pharmeasy','netmeds','medplus','doctor','medical','diagnostic','lab','gym','cult','salon','spa','barber','grooming','naturals','lakme']},
+{id:'entertain',name:'Entertainment',icon:'🎬',color:'#c026d3',keywords:['netflix','hotstar','disney','prime video','spotify','youtube premium','bookmyshow','pvr','inox','sony liv','zee5','jio cinema','gaana','wynk','steam','playstation']},
+{id:'education',name:'Education',icon:'📚',color:'#0d9488',keywords:['udemy','coursera','unacademy','byju','vedantu','upgrad','great learning','skillshare','course','tuition','school fee','college fee','kindle']},
+{id:'travel',name:'Travel',icon:'✈️',color:'#0284c7',keywords:['makemytrip','goibibo','cleartrip','yatra','ixigo','irctc','indigo','vistara','air india','spicejet','oyo','airbnb','booking.com','flight','agoda','easemytrip']},
+{id:'emi',name:'EMI & Loans',icon:'💳',color:'#e11d48',keywords:['emi','loan','bajaj finserv','installment','nbfc','home loan','car loan','personal loan']},
+{id:'investment',name:'Investments',icon:'📈',color:'#16a34a',keywords:['zerodha','groww','upstox','sip','mutual fund','nps','ppf','elss','kuvera','indmoney','smallcase','etmoney','paytm money']},
+{id:'family',name:'Family',icon:'💝',color:'#db2777',keywords:['mom','dad','father','mother','wife','parents','pocket money']},
+{id:'ccpayment',name:'Credit Card Payment',icon:'💳',color:'#9ca3af',keywords:[]},
+{id:'other',name:'Other',icon:'◈',color:'#64748b',keywords:[]}];
+const INCOME_CATEGORIES=[
+{id:'salary',name:'Salary',icon:'💰',color:'#16a34a',keywords:['salary','payroll','wages','stipend','neft sal','imps sal']},
+{id:'invreturns',name:'Investment Returns',icon:'📈',color:'#0d9488',keywords:['interest','dividend','int pd','interest credit','fd interest','maturity interest']},
+{id:'invredemption',name:'Investment Redemption',icon:'📤',color:'#0891b2',keywords:['redemption','redeem','mf redemption','withdrawal','maturity','matured','sell','sold']},
+{id:'cashback',name:'Cashback & Rewards',icon:'💸',color:'#ca8a04',keywords:['cashback','reward','refund','cash back','rewards']},
+{id:'otherincome',name:'Other Income',icon:'◈',color:'#64748b',keywords:[]}];const ASSET_CATEGORIES=[{id:'bank',name:'Bank & Cash',icon:'🏦',color:'#16a34a',liquidity:'instant'},{id:'wallet',name:'Wallets',icon:'📱',color:'#0891b2',liquidity:'instant'},{id:'stocks',name:'Stocks & Mutual Funds',icon:'📈',color:'#ca8a04',liquidity:'semi'},{id:'fixed',name:'Fixed Income (FD/PPF/NPS)',icon:'🏛',color:'#6366f1',liquidity:'locked'},{id:'insurance',name:'Insurance & LIC',icon:'🛡',color:'#0284c7',liquidity:'locked'},{id:'gold',name:'Gold',icon:'🥇',color:'#d4820a',liquidity:'semi'},{id:'realestate',name:'Real Estate',icon:'🏠',color:'#dc2626',liquidity:'locked'},{id:'other',name:'Other Assets',icon:'◈',color:'#64748b',liquidity:'semi'}];const LIABILITY_CATEGORIES=[{id:'loan',name:'Loans & EMIs',icon:'💳',color:'#dc2626'},{id:'creditcard',name:'Credit Card Dues',icon:'🧾',color:'#e11d48'},{id:'other',name:'Other Liabilities',icon:'◈',color:'#64748b'}];
+
+const MERCHANT_DICT={'swiggy':'Swiggy','swiggyit':'Swiggy','swiggy limited':'Swiggy','bundl':'Swiggy','zomato':'Zomato','zomato ltd':'Zomato','amazon':'Amazon','amazon pay':'Amazon','amazonin':'Amazon','amzn':'Amazon','flipkart':'Flipkart','flpkrt':'Flipkart','uber':'Uber','uber india':'Uber','uberrides':'Uber','ola':'Ola','olacabs':'Ola','ani technologies':'Ola','netflix':'Netflix','netflix com':'Netflix','bigbasket':'BigBasket','bigbask':'BigBasket','innovative retail':'BigBasket','blinkit':'Blinkit','grofers':'Blinkit','zepto':'Zepto','geddit':'Zepto','myntra':'Myntra','phonepe':'PhonePe','paytm':'Paytm','gpay':'Google Pay','google pay':'Google Pay','hotstar':'Disney+ Hotstar','spotify':'Spotify','hpcl':'HPCL','iocl':'Indian Oil','bpcl':'Bharat Petroleum','irctc':'IRCTC','makemytrip':'MakeMyTrip','zerodha':'Zerodha','groww':'Groww','olx':'OLX'};
+
+function cleanAmount(s){if(s===null||s===undefined)return null;const n=parseFloat(String(s).replace(/[^0-9.]/g,''));return isNaN(n)?null:n;}
+function normalizeDate(s){if(!s)return null;s=String(s).trim();const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};let m=s.match(/(\d{1,2})[-\/]([A-Za-z]{3,})[-\/](\d{2,4})/);if(m){const mo=months[m[2].toLowerCase().substring(0,3)];let yr=m[3].length===2?'20'+m[3]:m[3];if(mo)return yr+'-'+mo+'-'+m[1].padStart(2,'0');}m=s.match(/(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);if(m){let yr=m[3].length===2?'20'+m[3]:m[3];return yr+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}return null;}
+function jaroWinkler(s1,s2){if(s1===s2)return 1;const jaro=(a,b)=>{const md=Math.floor(Math.max(a.length,b.length)/2)-1;const am=new Array(a.length).fill(false),bm=new Array(b.length).fill(false);let mt=0;for(let i=0;i<a.length;i++){const st=Math.max(0,i-md),en=Math.min(i+md+1,b.length);for(let j=st;j<en;j++){if(bm[j]||a[i]!==b[j])continue;am[i]=bm[j]=true;mt++;break;}}if(mt===0)return 0;let t=0,k=0;for(let i=0;i<a.length;i++){if(!am[i])continue;while(!bm[k])k++;if(a[i]!==b[k])t++;k++;}t/=2;return(mt/a.length+mt/b.length+(mt-t)/mt)/3;};const j=jaro(s1,s2);let p=0;for(let i=0;i<Math.min(4,s1.length,s2.length);i++){if(s1[i]===s2[i])p++;else break;}return j+p*0.1*(1-j);}
+
+// ---- UPI NARRATION EXTRACTION (new) ----
+// Handles: UPI-PARVATI SHARMA BHAND-parvati.sharma100@okhdfcbank-BARB0VJMGAO-640231188611-UPI
+function extractMerchantFromNarration(narration){
+  if(!narration)return null;
+  let s=String(narration).trim();
+  // UPI format: UPI-<NAME>-<vpa>-<bank>-<ref>-UPI
+  if(/^UPI-/i.test(s)){
+    const parts=s.split('-');
+    // parts[1] is usually the payee name
+    if(parts.length>=2){
+      let name=parts[1].trim();
+      // sometimes name has trailing tokens; take alpha words
+      if(name&&/[A-Za-z]/.test(name))return titleCaseName(name);
+    }
+  }
+  // NEFT/IMPS format: NEFT-<ref>-<NAME>-...
+  let m=s.match(/^(?:NEFT|IMPS|RTGS)[-\/]([A-Za-z0-9]+)[-\/]([A-Za-z][A-Za-z\s]{2,30})/i);
+  if(m&&m[2])return titleCaseName(m[2].trim());
+  // POS format: POS <merchant>
+  m=s.match(/^POS\s+(?:\d+\s+)?([A-Za-z][A-Za-z0-9\s]{2,30})/i);
+  if(m&&m[1])return titleCaseName(m[1].trim());
+  // ATM/CASH
+  if(/^(ATW|ATM|NWD|CASH)/i.test(s))return 'ATM Withdrawal';
+  // fallback: first alpha chunk
+  m=s.match(/([A-Za-z][A-Za-z\s]{2,30})/);
+  if(m)return titleCaseName(m[1].trim());
+  return null;
+}
+function titleCaseName(s){return s.toLowerCase().replace(/\b\w/g,l=>l.toUpperCase()).replace(/\s+/g,' ').trim();}
+
+function normalizeMerchant(raw){
+  if(!raw)return null;
+  // if it's a UPI/NEFT narration string, extract first
+  if(/^(UPI|NEFT|IMPS|RTGS|POS|ATW|ATM|NWD)/i.test(String(raw).trim())){
+    const ext=extractMerchantFromNarration(raw);
+    if(ext){
+      // try dictionary on extracted
+      const low=ext.toLowerCase();
+      for(const k in MERCHANT_DICT){if(low.includes(k))return MERCHANT_DICT[k];}
+      return ext;
+    }
+  }
+  let s=raw.toLowerCase().trim().replace(/\b(upi|vpa|ltd|limited|pvt|private|india|in|payment|txn|ref)\b/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  for(const k in MERCHANT_DICT){if(s.includes(k))return MERCHANT_DICT[k];}
+  let best=null,bs=0;for(const k in MERCHANT_DICT){const sc=jaroWinkler(s,k);if(sc>bs){bs=sc;best=MERCHANT_DICT[k];}}
+  if(bs>=0.92)return best;
+  return raw.trim().split(/\s+/).slice(0,3).map(w=>w.charAt(0).toUpperCase()+w.slice(1).toLowerCase()).join(' ');
+}
+// Hardcoded merchant→category rules (highest priority, applied to all parsers)
+const MERCHANT_RULES=[
+  {re:/parvati\s*sharma|parvati.*bhand/i, cat:'family'},
+  {re:/hima\s*devi\s*sharma/i, cat:'family'},
+  {re:/anand\s*seshadri/i, cat:'utilities'},   // Utilities & Rent
+  {re:/rajasekar/i, cat:'utilities'},          // Utilities & Rent
+  {re:/footprints/i, cat:'education'},
+  {re:/tasmac/i, cat:'eatingout'}
+];
+function applyMerchantRules(text){const t=text||'';for(const r of MERCHANT_RULES){if(r.re.test(t))return r.cat;}return null;}
+function autoCategorize(text,isIncome){const lower=(text||'').toLowerCase();if(!isIncome){const forced=applyMerchantRules(text);if(forced)return forced;}const cats=isIncome?INCOME_CATEGORIES:EXPENSE_CATEGORIES;let best=isIncome?'otherincome':'other',bm=0;for(const c of cats){for(const kw of c.keywords){if(lower.includes(kw)&&kw.length>bm){bm=kw.length;best=c.id;}}}return best;}
+
+// ---- SMS TEMPLATES (added SBI credit card + salary name fix) ----
+const BANK_TEMPLATES=[
+{bank:'HDFC',version:'hdfc-v1',type:'credit',requires:/HDFC/i,re:/(?:INR|Rs\.?)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:deposited|credited)\s*in\s*(?:HDFC\s*Bank\s*)?A\/c\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*on\s*(\d{1,2}[-\/][A-Za-z]{3,}[-\/]\d{2,4})/i,bal:/Avl\s*bal\s*(?:INR|Rs\.?)\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/for\s+([A-Za-z0-9]+)/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'HDFC',version:'hdfc-v2',type:'debit',requires:/HDFC/i,re:/(?:INR|Rs\.?)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:debited|spent|withdrawn)\s*(?:from\s*)?(?:HDFC\s*Bank\s*)?(?:A\/c|Card)\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*(?:on\s*(\d{1,2}[-\/][A-Za-z]{3,}[-\/]\d{2,4}))?/i,bal:/Avl\s*bal\s*(?:INR|Rs\.?)\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:to|at|VPA)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'SBICARD',version:'sbicard-v1',type:'debit',requires:/SBI\s*Credit\s*Card/i,re:/Rs\.?\s*([\d,]+(?:\.\d{1,2})?)\s*spent\s*on\s*your\s*SBI\s*Credit\s*Card\s*ending\s*(?:with\s*)?(\d{4})\s*at\s*([A-Za-z0-9\s]{2,30}?)\s*on\s*(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4})/i,bal:null,ref:null,map:m=>({amount:m[1],card:m[2],merchant:m[3],date:m[4]})},
+{bank:'SBI',version:'sbi-v1',type:'debit',requires:/(?:SBI|State Bank)/i,re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:debited|withdrawn)\s*(?:from\s*)?(?:A\/c|account)\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*on\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,bal:/(?:Avl\s*Bal|Available\s*Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:to|trf to|transfer to)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'SBI',version:'sbi-v2',type:'credit',requires:/(?:SBI|State Bank)/i,re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:credited|deposited)\s*(?:to\s*)?(?:A\/c|account)\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*on\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,bal:/(?:Avl\s*Bal|Available\s*Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:from|by)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'ICICI',version:'icici-v1',type:'debit',re:/ICICI\s*Bank\s*(?:Acct?|A\/c)\s*([X\d]+\d{3,4})\s*(?:is\s*)?debited\s*(?:with\s*|for\s*)?(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*on\s*(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4})/i,bal:/Avl\s*Bal\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/;\s*([A-Za-z0-9\s]{3,30})\s*credited/i,map:m=>({account:m[1],amount:m[2],date:m[3]})},
+{bank:'ICICI',version:'icici-v2',type:'credit',re:/ICICI\s*Bank\s*(?:Acct?|A\/c)\s*([X\d]+\d{3,4})\s*(?:is\s*)?credited\s*(?:with\s*)?(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*on\s*(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4})/i,bal:/Avl\s*Bal\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:from|by)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({account:m[1],amount:m[2],date:m[3]})},
+{bank:'Axis',version:'axis-v1',type:'debit',requires:/Axis/i,re:/(?:INR|Rs\.?)\s*([\d,]+(?:\.\d{1,2})?)\s*debited\s*(?:from\s*)?A\/c\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*on\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,bal:/(?:Avl|Available)\s*Bal\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:to|towards)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'Kotak',version:'kotak-v1',type:'debit',requires:/Kotak/i,re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:debited|spent)\s*(?:from\s*)?(?:Kotak\s*)?(?:Bank\s*)?A\/c\s*([X\d]+\d{3,4})\s*on\s*(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/i,bal:/(?:Avl|Available)\s*(?:Bal|Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:to|at)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'UPI',version:'upi-v1',type:'debit',re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:paid|debited|sent)\s*(?:to\s*)?([A-Za-z0-9@.\s]{3,30})?\s*(?:via|using|from)\s*(?:UPI|A\/c\s*([X\d]+\d{3,4}))/i,bal:/(?:Avl|Available)\s*(?:Bal|Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:null,map:m=>({amount:m[1],merchant:m[2],account:m[3]})},
+{bank:'Bank',version:'generic-debit-v1',type:'debit',re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:debited|spent|withdrawn|paid)\s*(?:from\s*)?(?:A\/c|account|Card)\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*(?:on\s*(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4}))?/i,bal:/(?:Avl|Available)\s*(?:Bal|Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:to|at|towards|VPA)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})},
+{bank:'Bank',version:'generic-credit-v1',type:'credit',re:/(?:Rs\.?|INR)\s*([\d,]+(?:\.\d{1,2})?)\s*(?:credited|deposited|received)\s*(?:to|in)?\s*(?:A\/c|account)\s*(?:no\.?\s*)?([X\d]+\d{3,4})\s*(?:on\s*(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4}))?/i,bal:/(?:Avl|Available)\s*(?:Bal|Balance)\s*(?:Rs\.?|INR)?\s*([\d,]+(?:\.\d{1,2})?)/i,ref:/(?:from|by)\s+([A-Za-z0-9@.\s]{3,30})/i,map:m=>({amount:m[1],account:m[2],date:m[3]})}];
+
+function parseSMS(text){const signals={transaction:null,balanceUpdate:null,matched:false,confidence:0,bank:null,version:null};if(!text||text.trim().length<10)return signals;for(const tmpl of BANK_TEMPLATES){if(tmpl.requires&&!tmpl.requires.test(text))continue;const m=text.match(tmpl.re);if(!m)continue;const mapped=tmpl.map(m);const amount=cleanAmount(mapped.amount);if(!amount)continue;signals.matched=true;signals.bank=tmpl.bank;signals.version=tmpl.version;let conf=0.6;if(mapped.account||mapped.card)conf+=0.15;if(mapped.date)conf+=0.1;const date=normalizeDate(mapped.date);const isIncome=tmpl.type==='credit';let merchant=mapped.merchant||null;if(!merchant&&tmpl.ref){const rm=text.match(tmpl.ref);if(rm)merchant=rm[1];}const refText=(merchant||'')+' '+text;let category=autoCategorize(refText,isIncome);
+// salary code detection + clean name
+let cleanName=null;
+if(isIncome&&category==='otherincome'){if(/[A-Z]{3}SL\d|SAL\d|SALARY|MNTHSL|[A-Z]{3}SAL/i.test(text)){category='salary';}}
+if(category==='salary'){cleanName='Salary — '+tmpl.bank;}
+if(merchant)conf+=0.1;
+const finalName=cleanName||normalizeMerchant(merchant)||(isIncome?tmpl.bank+' Credit':tmpl.bank+' Debit');
+signals.transaction={name:finalName,amount:isIncome?amount:-amount,date:date,category:category,type:isIncome?'income':'expense',account:mapped.account||(mapped.card?'XX'+mapped.card:null),bank:tmpl.bank,source:'sms',rawRef:merchant,lowConfidence:category==='other'};if(tmpl.bal){const bm2=text.match(tmpl.bal);if(bm2){const bal=cleanAmount(bm2[1]);if(bal!==null){conf+=0.05;signals.balanceUpdate={bank:tmpl.bank,account:mapped.account||null,balance:bal,date:date,assetCategory:'bank'};}}}signals.confidence=Math.min(conf,0.99);break;}return signals;}
+
+function isDuplicate(tx,existing){for(const e of existing){if(e.gmailId&&tx.gmailId&&e.gmailId===tx.gmailId)return{dup:true,confidence:1};const sameAmt=Math.abs(Math.abs(e.amount)-Math.abs(tx.amount))<0.5;if(!sameAmt)continue;const dd=Math.abs((new Date(e.date)-new Date(tx.date))/86400000);if(dd>3)continue;let conf=0.5;const sn=e.name&&tx.name&&e.name.toLowerCase()===tx.name.toLowerCase();if(sn)conf+=0.3;else if(e.name&&tx.name&&jaroWinkler(e.name.toLowerCase(),tx.name.toLowerCase())>0.85)conf+=0.2;if(e.account&&tx.account&&e.account.slice(-4)===tx.account.slice(-4))conf+=0.2;if(e.rawRef&&tx.rawRef&&e.rawRef===tx.rawRef)conf+=0.3;if(conf>=0.85)return{dup:true,confidence:Math.min(conf,1),match:e};if(conf>=0.65)return{dup:'possible',confidence:conf,match:e};}return{dup:false,confidence:0};}
+
+// ============================================================
+// STATEMENT PARSER V2 — column-aware (the big fix)
+// ============================================================
+// Takes an array of rows (each row = array of cell strings) and a header row.
+// Auto-detects columns: date, narration, withdrawal, deposit, balance.
+function detectColumns(header){
+  const h=header.map(x=>String(x||'').toLowerCase().trim());
+  // substring match for safe, distinctive keys
+  const find=(...keys)=>h.findIndex(c=>keys.some(k=>c.includes(k)));
+  // word match for short/ambiguous keys (cr, dr) so "Description" doesn't match "cr"
+  const findWord=(...keys)=>h.findIndex(c=>{const words=c.split(/[^a-z]+/);return keys.some(k=>words.includes(k));});
+  // narration first so we know which column it is, to exclude it from others
+  const narration=find('narration','description','particular','remarks','detail');
+  // withdrawal: prefer distinctive words; fall back to 'dr' as a whole word
+  let withdrawal=find('withdrawal','debit','paid');
+  if(withdrawal<0)withdrawal=findWord('dr');
+  let deposit=find('deposit','credit','received');
+  if(deposit<0)deposit=findWord('cr');
+  // never let withdrawal/deposit collide with narration column
+  if(withdrawal===narration)withdrawal=-1;
+  if(deposit===narration)deposit=-1;
+  return {
+    date: find('date','value dt'),
+    narration: narration,
+    ref: find('chq','ref','cheque'),
+    withdrawal: withdrawal,
+    deposit: deposit,
+    balance: find('closing balance','balance','avl bal'),
+    amount: find('amount')
+  };
+}
+
+// Parse statement rows into transactions + final balance
+function parseStatementRows(header, rows){
+  const col=detectColumns(header);
+  const txns=[];
+  let latestBalance=null, latestBalanceDate=null;
+  for(const row of rows){
+    if(!row||row.length<2)continue;
+    const dateRaw = col.date>=0?row[col.date]:'';
+    if(!dateRaw||!/\d/.test(dateRaw))continue; // skip non-data rows
+    const date=normalizeDate(dateRaw);if(!date)continue; // skip summary/footer rows with non-date values
+    const narration = col.narration>=0?(row[col.narration]||''):'';
+    let amount=null,isInc=false;
+    // separate withdrawal/deposit columns
+    const wAmt = col.withdrawal>=0?cleanAmount(row[col.withdrawal]):null;
+    const dAmt = col.deposit>=0?cleanAmount(row[col.deposit]):null;
+    if(wAmt&&wAmt>0){amount=-wAmt;isInc=false;}
+    else if(dAmt&&dAmt>0){amount=dAmt;isInc=true;}
+    else if(col.amount>=0){const a=cleanAmount(row[col.amount]);if(a){amount=-Math.abs(a);}}
+    if(amount===null||isNaN(amount)||amount===0)continue;
+    // capture closing balance (NOT used as amount)
+    if(col.balance>=0){const b=cleanAmount(row[col.balance]);if(b!==null){latestBalance=b;latestBalanceDate=date;}}
+    const merchant=normalizeMerchant(narration)||'Statement Item';
+    let category=autoCategorize(narration,isInc);
+    let bal=null;
+    if(col.balance>=0){const b=cleanAmount(row[col.balance]);if(b!==null)bal=b;}
+    // CC payment detection — same as parseStatementText
+    if(!isInc&&/\bcc\b.*autopay|autopay.*si-tad|sbicard|sbi card|cred club|cred\.club|credit card payment|\bcc\s+\d{3}/i.test(narration)){category='ccpayment';}
+    txns.push({date,name:merchant,amount,type:isInc?'income':'expense',category,rawRef:(col.ref>=0?row[col.ref]:'')||narration.substring(0,40),source:'statement',balanceAfter:bal!==null?bal:undefined,lowConfidence:category==='other'&&category!=='ccpayment'});
+  }
+  return {txns, latestBalance, latestBalanceDate, columns:col};
+}
+
+// Parse PDF text. Each data line: DATE NARRATION REF [VALUEDT] AMOUNT BALANCE
+// Uses explicit AMOUNT (2nd-last number) and BALANCE movement (last number) for direction.
+function parseStatementText(text){
+  const lines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];let prevBal=null,latestBalance=null,latestBalanceDate=null;
+  const dateLineRe=/^(\d{1,2}[-\/][A-Za-z0-9]{2,}[-\/]\d{2,4})\s+(.+)/;
+  for(const line of lines){
+    const m=line.match(dateLineRe);
+    if(!m)continue;
+    const date=normalizeDate(m[1]);
+    let rest=m[2];
+    // Strip ALL date-like tokens (transaction date repeated, Value Date column) so their
+    // digit groups (DD, MM, YY) don't pollute numeric extraction.
+    const restNoDates=rest.replace(/\b\d{1,2}\/\d{1,2}\/\d{2,4}\b/g,' ');
+    // Find whitespace-bounded purely-numeric tokens (digits, commas, optional 2-decimal).
+    // This naturally excludes reference numbers attached to text (e.g. "...SBIN0018394-0000642699948")
+    // since those contain letters/hyphens and won't match a pure-digit token.
+    const tokenRe=/(?:^|\s)((?:\d{1,3}(?:,\d{2,3})*|\d+)(?:\.\d{1,2})?)(?=\s|$)/g;
+    const tokens=[];let tm;
+    while((tm=tokenRe.exec(restNoDates))){tokens.push(tm[1]);}
+    if(tokens.length<2)continue; // need at least amount + balance
+    // Last token = closing balance (always has 2-decimal in HDFC statements)
+    const balTok=tokens[tokens.length-1];
+    const bal=parseFloat(balTok.replace(/,/g,''));
+    if(isNaN(bal))continue;
+    // Amount = last remaining candidate token with realistic length (<=8 digits) and value>0
+    let amount=null;
+    for(let i=tokens.length-2;i>=0;i--){
+      const raw=tokens[i].replace(/,/g,'');
+      const intLen=raw.split('.')[0].length;
+      if(intLen>8)continue; // reference number, skip
+      const v=parseFloat(raw);
+      if(!isNaN(v)&&v>0){amount=v;break;}
+    }
+    if(amount===null||isNaN(amount)||amount<=0)continue;
+    // direction: explicit DR/CR markers > income keywords > balance movement
+    const hasDR=/\b(DR|RTGS DR|NEFT DR|debit)\b/i.test(rest)||/-TPT-|-CAR PAYMENT|AUTOPAY|PAYMENT ON CRED|PACKERS|BROKERAGE|ADVANCE|SECURITY DEPOSIT/i.test(rest);
+    const hasCR=/\b(CR|RTGS CR|NEFT CR|IMPS CR)\b/i.test(rest);
+    const incomeKw=/\bsalsl\b|salary|salsl|interest paid|\binterest\b|deposit by|refund|cashback|reversal|\breceived\b/i.test(rest);
+    let isInc;
+    if(hasDR){ isInc=false; }
+    else if(hasCR||incomeKw){ isInc=true; }
+    else if(prevBal!==null){ isInc = bal>prevBal; }
+    else { isInc=false; }
+    prevBal=bal;
+    latestBalance=bal;latestBalanceDate=date;
+    // narration = text up to the first long ref/number block
+    let cut=rest.search(/\s+0000\d|\s+\d{6,}/);
+    let narration=(cut>0?rest.substring(0,cut):rest.replace(/\s+[\d,]+\.?\d*\s*$/,'')).trim();
+    // clean salary code → "Salary"
+    let merchant;
+    if(/salsl|febsal|marssl|aprsl|maysl|[a-z]{3}sl\d|salary/i.test(narration)){ merchant='Salary'; }
+    else if(/interest paid|\binterest\b/i.test(narration)){ merchant='Interest Credit'; }
+    else { merchant=normalizeMerchant(narration)||'Statement Item'; }
+    let category=autoCategorize(narration,isInc);
+    if(merchant==='Salary')category='salary';
+    if(merchant==='Interest Credit')category='invreturns';
+    // Credit card bill payments from bank → tag as ccpayment (excluded from spending totals)
+    if(!isInc && /\bcc\b.*autopay|autopay.*si-tad|sbicard|sbi card|cred club|cred\.club|credit card payment|\bcc\s+\d{3}/i.test(rest)){ category='ccpayment'; if(merchant==='Cc'||/^cc$/i.test(merchant))merchant='Credit Card Payment'; }
+    txns.push({date,name:merchant,amount:isInc?amount:-amount,type:isInc?'income':'expense',category,rawRef:narration.substring(0,40),source:'statement',balanceAfter:bal,lowConfidence:category===(isInc?'otherincome':'other')&&category!=='ccpayment'});
+  }
+  return {txns,latestBalance,latestBalanceDate};
+}
+
+// ============================================================
+// SBI CREDIT CARD STATEMENT PARSER (independent of HDFC parser)
+// Format: DATE  TRANSACTION DETAILS  AMOUNT  C/D
+// Date format: "04 Apr 26" (DD Mon YY). C=credit to card, D=debit(spend).
+// Ignores ads/headers/summary; reads only transaction rows.
+// ============================================================
+function normalizeCardDate(s){
+  // "04 Apr 26" or "04 APR 26" -> YYYY-MM-DD
+  if(!s)return null;
+  const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  const m=String(s).trim().match(/^(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{2,4})$/);
+  if(!m)return null;
+  const mo=months[m[2].toLowerCase().substring(0,3)];
+  if(!mo)return null;
+  let yr=m[3].length===2?'20'+m[3]:m[3];
+  return yr+'-'+mo+'-'+m[1].padStart(2,'0');
+}
+
+function categorizeCardCredit(details){
+  // Your rules for C (credit) rows:
+  // - "PAYMENT RECEIVED" -> SKIP (bill payment, not income)
+  // - fuel surcharge waiver / cashback-style -> Cashback & Rewards
+  const d=(details||'').toLowerCase();
+  if(/payment received|payment recd|received\s+\d|autopay|neft|imps received|bbps/i.test(d)){
+    return {skip:true};
+  }
+  // everything else credited to the card = cashback/reward/refund
+  return {skip:false, category:'cashback'};
+}
+
+// Parse SBI credit card statement text (may be multi-page, full of ads/headers)
+function parseCardStatementText(text){
+  const rawLines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];
+  // A transaction row looks like: <DD Mon YY> <details...> <amount> <C|D>
+  // Amount may have commas/decimals. The C/D is a trailing single letter.
+  // We scan EVERY line; only lines matching the strict pattern are kept. This
+  // naturally ignores ads, headers, summaries, page numbers, etc.
+  const rowRe=/^(\d{1,2}\s+[A-Za-z]{3,}\s+\d{2,4})\s+(.+?)\s+([\d,]+\.\d{2})\s*(C|D|Cr|Dr)\b/i;
+  for(const line of rawLines){
+    const m=line.match(rowRe);
+    if(!m)continue;
+    const date=normalizeCardDate(m[1]);
+    if(!date)continue;
+    const details=m[2].trim();
+    const amount=parseFloat(m[3].replace(/,/g,''));
+    if(isNaN(amount)||amount<=0)continue;
+    const cd=m[4].toUpperCase().charAt(0); // C or D
+    if(cd==='D'){
+      // debit = expense
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      const category=autoCategorize(details,false);
+      txns.push({date,name:merchant,amount:-amount,type:'expense',category,rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:category==='other'});
+    } else {
+      // credit to card
+      const c=categorizeCardCredit(details);
+      if(c.skip)continue; // PAYMENT RECEIVED etc. -> ignore entirely
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      txns.push({date,name:merchant,amount:amount,type:'income',category:c.category,rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:false});
+    }
+  }
+  return {txns};
+}
+
+// ============================================================
+// AXIS FLIPKART CREDIT CARD PARSER (rewritten for real format)
+// REAL FORMAT: DD/MM/YYYY | Description [Merchant Category] | Amount Dr/Cr | Cashback Dr/Cr
+// No rupee symbol. Dr=debit, Cr=credit. Password DIPA0111.
+// ============================================================
+function normalizeAxisDate(s){return normalizeFlexCardDate(s);}
+function categorizeAxisDebit(details){
+  const d=(details||'').toLowerCase();
+  if(/emi\s+principal|emi\s+interest|\bemi\b/i.test(d))return 'emi';
+  if(/\bgst\b/i.test(d))return 'emi';
+  if(/flipkart|myntra|amazon|shopping/i.test(d))return 'shopping';
+  return autoCategorize(details,false);
+}
+const AXIS_CAT_LABELS=/\s+(DEPT\.?\s*STORES?|MISC\.?\s*STORES?|CLOTH\.?\s*STORES?|GROCERY|DINING|PETROL|TRAVEL|UTILITIES|TELECOM|ELECTRONICS|INSURANCE|EDUCATION|HEALTH|ENTERTAINMENT|[A-Z]{3,}\s+STORES?)\s*$/i;
+function parseAxisCardStatementText(text){
+  const rawLines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];
+  const rowRe=/^(\d{2}\/\d{2}\/\d{4})\s+(.+?)\s+([\d,]+\.\d{2})\s*(Dr|Cr)\b/i;
+  for(const line of rawLines){
+    const m=line.match(rowRe);
+    if(!m)continue;
+    const date=normalizeFlexCardDate(m[1]);
+    if(!date)continue;
+    let details=m[2].trim().replace(AXIS_CAT_LABELS,'').trim();
+    if(!details||details.length<2)continue;
+    const amount=parseFloat(m[3].replace(/,/g,''));
+    if(isNaN(amount)||amount<=0)continue;
+    const dc=m[4].toLowerCase();
+    if(dc==='cr'){
+      if(isCardPaymentCredit(details))continue;
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      txns.push({date,name:merchant,amount:amount,type:'income',category:'cashback',rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:false});
+    } else {
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      const category=categorizeAxisDebit(details);
+      txns.push({date,name:merchant,amount:-amount,type:'expense',category,rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:category==='other'});
+    }
+  }
+  return {txns};
+}
+
+// ============================================================
+// HDFC PIXEL / IOCL CREDIT CARD PARSER (sign-based)
+// Credit = amount preceded by '+' immediately before ₹ (e.g. +₹4,047.19)
+// Debit  = amount with no '+' before ₹ (e.g. ₹139.00)
+// Dates: "27 Apr 2026 00:00" (Pixel) OR "30/03/2026 15:14" (IOCL)
+// Middle columns (CashPoints / PI) are ignored — we read the trailing ₹ amount.
+// ============================================================
+function normalizeFlexCardDate(s){
+  if(!s)return null;
+  s=String(s).trim().replace(/\|/g,' ').replace(/\s+/g,' ').trim();
+  // strip trailing time if present
+  s=s.replace(/\s+\d{1,2}:\d{2}(:\d{2})?$/,'');
+  // DD/MM/YYYY
+  let m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){let y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0');}
+  // DD Mon YYYY
+  const months={jan:'01',feb:'02',mar:'03',apr:'04',may:'05',jun:'06',jul:'07',aug:'08',sep:'09',oct:'10',nov:'11',dec:'12'};
+  m=s.match(/^(\d{1,2})\s+([A-Za-z]{3,})\s+'?(\d{2,4})$/);
+  if(m){const mo=months[m[2].toLowerCase().substring(0,3)];if(!mo)return null;let y=m[3].length===2?'20'+m[3]:m[3];return y+'-'+mo+'-'+m[1].padStart(2,'0');}
+  return null;
+}
+function isCardPaymentCredit(details){
+  return /payment received|payment recd|autopay|auto pay|auto-debit|autodebit|bbps|thank you|received\s*-/i.test(details||'');
+}
+function parsePixelCardStatementText(text){
+  const rawLines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];
+  const dateRe=/^(\d{1,2}\/\d{1,2}\/\d{2,4}|\d{1,2}\s+[A-Za-z]{3,}\s+'?\d{2,4})(?:[\s|]+\d{1,2}:\d{2}(?::\d{2})?)?\s+(.+)$/;
+  // Amount near end of line. \u20b9 (\u20b9) is OPTIONAL: HDFC PDFs use non-standard font
+  // encoding and PDF.js often drops the \u20b9 symbol entirely. We detect credit by + sign.
+  const amtRe=/([+]\s*(?:\u20b9|Rs\.?|INR)?\s*|(?:\u20b9|Rs\.?|INR)\s*|\s)(\d[\d,]*\.\d{2})\s*[^\d.]*$/;
+  for(const line of rawLines){
+    const dm=line.match(dateRe);
+    if(!dm)continue;
+    const date=normalizeFlexCardDate(dm[1]);
+    if(!date)continue;
+    const rest=dm[2];
+    const am=rest.match(amtRe);
+    if(!am||!am[2])continue;
+    const amount=parseFloat(am[2].replace(/,/g,''));
+    if(isNaN(amount)||amount<=0)continue;
+    const isCredit=!!(am[1]&&am[1].includes('+'));
+    // description = everything before the amount match, strip trailing cashpoints lone integer
+    let details=rest.substring(0,am.index).replace(/\s+\d+\s*$/,'').trim();
+    if(!details||details.length<2)continue;
+    if(isCredit){
+      if(isCardPaymentCredit(details))continue;
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      txns.push({date,name:merchant,amount:amount,type:'income',category:'cashback',rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:false});
+    } else {
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      const category=autoCategorize(details,false);
+      txns.push({date,name:merchant,amount:-amount,type:'expense',category,rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:category==='other'});
+    }
+  }
+  return {txns};
+}
+
+// ============================================================
+// ICICI AMAZON PAY / CORAL CREDIT CARD PARSER (CR-suffix based)
+// Credit = amount with "CR" suffix. Debit = amount with no suffix.
+// Columns: Date  SerNo  Description  RewardPoints  [Intl]  Amount[ CR]
+// Date: DD/MM/YYYY. Card-number header lines (4375XXXX...) ignored.
+// ============================================================
+function parseIciciCardStatementText(text){
+  const rawLines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];
+  // date, serno(6+ digits), description, rewardpoints(int), amount, optional CR
+  const rowRe=/^(\d{2}\/\d{2}\/\d{4})\s+(\d{6,})\s+(.+?)\s+(\d{1,4})\s+([\d,]+\.\d{2})\s*(CR)?\b/i;
+  // fallback: some rows may lack reward points
+  const rowRe2=/^(\d{2}\/\d{2}\/\d{4})\s+(\d{6,})\s+(.+?)\s+([\d,]+\.\d{2})\s*(CR)?\b/i;
+  for(const line of rawLines){
+    let m=line.match(rowRe);let descI=3,amtI=5,crI=6;
+    if(!m){m=line.match(rowRe2);descI=3;amtI=4;crI=5;}
+    if(!m)continue;
+    const date=normalizeFlexCardDate(m[1]);
+    if(!date)continue;
+    const details=m[descI].trim();
+    const amount=parseFloat(m[amtI].replace(/,/g,''));
+    if(isNaN(amount)||amount<=0)continue;
+    const isCredit=!!m[crI];
+    if(isCredit){
+      if(isCardPaymentCredit(details))continue; // Autodebit Payment Recd. etc → skip
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      txns.push({date,name:merchant,amount:amount,type:'income',category:'cashback',rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:false});
+    } else {
+      const merchant=normalizeMerchant(details)||details.substring(0,40);
+      const category=autoCategorize(details,false);
+      txns.push({date,name:merchant,amount:-amount,type:'expense',category,rawRef:details.substring(0,40),source:'cardstatement',lowConfidence:category==='other'});
+    }
+  }
+  return {txns};
+}
+
+// ============================================================
+// HDFC SMART STATEMENT PARSER (smartstatements.hdfc.bank.in)
+// Format: DD/MM/YYYY | Narration | Chq/Ref | Value Date | Withdrawal | Deposit | Closing Balance
+// Separate withdrawal and deposit columns — no balance-difference guessing needed.
+// 4-digit year dates. Amounts have Indian comma formatting (6,45,024.43).
+// ============================================================
+function parseSmartStatementText(text){
+  const rawLines=text.split(/\n/).map(l=>l.trim()).filter(l=>l);
+  const txns=[];let latestBalance=null,latestBalanceDate=null;
+  // Line: DD/MM/YYYY <narration+ref> DD/MM/YYYY withdrawal deposit closing
+  const rowRe=/^(\d{2}\/\d{2}\/\d{4})\s+(.+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/;
+  function parseAmt(s){return parseFloat((s||'').replace(/,/g,''));}
+  function smartDate(s){return s.substring(6,10)+'-'+s.substring(3,5)+'-'+s.substring(0,2);} // DD/MM/YYYY→YYYY-MM-DD
+  for(const line of rawLines){
+    const m=line.match(rowRe);
+    if(!m)continue;
+    const date=smartDate(m[1]);
+    const narration=m[2].trim();
+    const withdrawal=parseAmt(m[4]);
+    const deposit=parseAmt(m[5]);
+    const closing=parseAmt(m[6]);
+    if(isNaN(closing))continue;
+    if(!isNaN(closing)){if(!latestBalanceDate||date>latestBalanceDate){latestBalance=closing;latestBalanceDate=date;}}
+    const isInc=deposit>0&&withdrawal===0;
+    const amount=isInc?deposit:withdrawal;
+    if(isNaN(amount)||amount<=0)continue;
+    const merchant=normalizeMerchant(narration)||'Statement Item';
+    let category=autoCategorize(narration,isInc);
+    if(/salary|sal\s+sl/i.test(narration)&&isInc)category='salary';
+    if(/interest paid|int pd|interest credit/i.test(narration)&&isInc)category='invreturns';
+    // CC payment detection — same patterns as regular HDFC parser
+    if(!isInc&&/\bcc\b.*autopay|autopay.*si-tad|sbicard|sbi card|cred club|cred\.club|credit card payment|\bcc\s+\d{3}/i.test(narration)){category='ccpayment';};
+    const lowConf=category===(isInc?'otherincome':'other');
+    txns.push({date,name:merchant,amount:isInc?amount:-amount,type:isInc?'income':'expense',category,rawRef:narration.substring(0,40),source:'statement',balanceAfter:closing,lowConfidence:lowConf&&category!=='ccpayment'});
+  }
+  return{txns,latestBalance,latestBalanceDate};
+}
+
+
+
+// ===== STORAGE LAYER (embedded, tested 17/17) =====
+// ============================================================
+// STORAGE LAYER — handles 50k+ transactions without lag
+// Monthly buckets + pre-computed summary + search index
+// ============================================================
+// This simulates the browser localStorage logic in pure JS for testing.
+
+function makeStore(){
+  const mem={};
+  return {
+    getItem:k=>k in mem?mem[k]:null,
+    setItem:(k,v)=>{mem[k]=String(v);},
+    removeItem:k=>{delete mem[k];},
+    keys:()=>Object.keys(mem),
+    _size:()=>Object.keys(mem).length
+  };
+}
+
+function monthKey(date){ // date = 'YYYY-MM-DD' -> 'YYYY_MM'
+  return date.substring(0,7).replace('-','_');
+}
+
+// Storage manager
+function createLedgerStore(LS){
+  const PREFIX='ledger_v1';
+  const TXN=PREFIX+'_txn_';      // + YYYY_MM
+  const SUMMARY=PREFIX+'_summary';
+  const INDEX=PREFIX+'_index';    // month list
+  const META=PREFIX+'_meta';      // profile, settings, assets, liabilities
+
+  function loadMeta(){ const m=LS.getItem(META); return m?JSON.parse(m):{profile:null,assets:[],liabilities:[],currency:'₹',budget:0}; }
+  function saveMeta(meta){ LS.setItem(META,JSON.stringify(meta)); }
+
+  function getMonthList(){ const i=LS.getItem(INDEX); return i?JSON.parse(i):[]; }
+  function setMonthList(list){ LS.setItem(INDEX,JSON.stringify(list)); }
+
+  function loadMonth(mk){ const d=LS.getItem(TXN+mk); return d?JSON.parse(d):[]; }
+  function saveMonth(mk,txns){ LS.setItem(TXN+mk,JSON.stringify(txns)); }
+
+  // Add a batch of transactions efficiently — groups by month, single write per month
+  function addBatch(txns){
+    const byMonth={};
+    for(const t of txns){ const mk=monthKey(t.date); (byMonth[mk]=byMonth[mk]||[]).push(t); }
+    const monthList=new Set(getMonthList());
+    for(const mk in byMonth){
+      const existing=loadMonth(mk);
+      existing.push(...byMonth[mk]);
+      saveMonth(mk,existing);
+      monthList.add(mk);
+    }
+    setMonthList([...monthList].sort().reverse());
+    rebuildSummary();
+  }
+
+  function addOne(t){ addBatch([t]); }
+
+  function getMonth(mk){ return loadMonth(mk); }
+
+  // Recompute summary for a single month (fast path for edits/deletes)
+  function recomputeMonth(mk){
+    const summary=getSummary();
+    const txns=loadMonth(mk);
+    // remove old month contribution from allTime + review
+    const prev=summary.months[mk];
+    if(prev){
+      for(const c in prev.cats){ summary.allTimeCategory[c]=(summary.allTimeCategory[c]||0)-prev.cats[c]; if(summary.allTimeCategory[c]<=0)delete summary.allTimeCategory[c]; }
+      summary.totalTxns-=prev.count;
+    }
+    let spent=0,income=0,cats={},review=0;
+    for(const t of txns){
+      if(t.wasDuplicate||t.lowConfidence)review++;
+      if(t.amount<0){ if(t.category!=='ccpayment'){ spent+=Math.abs(t.amount); } cats[t.category]=(cats[t.category]||0)+Math.abs(t.amount); summary.allTimeCategory[t.category]=(summary.allTimeCategory[t.category]||0)+Math.abs(t.amount); }
+      else income+=t.amount;
+    }
+    // recompute review count fully only for this month delta
+    summary.months[mk]={spent,income,cats,count:txns.length};
+    summary.totalTxns+=txns.length;
+    // review count: recompute cheaply by summing per-month flags we track lazily — recompute from months is O(months) not O(txns)
+    summary.reviewCount=Object.keys(summary.months).reduce((acc,k)=>{ return acc; },0);
+    // simplest correct: recount review across loaded months would be O(n); instead store per-month review
+    summary.months[mk].review=review;
+    summary.reviewCount=Object.values(summary.months).reduce((a,m)=>a+(m.review||0),0);
+    LS.setItem(SUMMARY,JSON.stringify(summary));
+    return summary;
+  }
+
+  function updateTxn(mk,id,patch){
+    const txns=loadMonth(mk);
+    const idx=txns.findIndex(t=>t.id===id);
+    if(idx>=0){ Object.assign(txns[idx],patch);
+      const newMk=monthKey(txns[idx].date);
+      if(newMk!==mk){ const moved=txns.splice(idx,1)[0]; saveMonth(mk,txns); const dst=loadMonth(newMk); dst.push(moved); saveMonth(newMk,dst); const ml=new Set(getMonthList()); ml.add(newMk); setMonthList([...ml].sort().reverse()); recomputeMonth(mk); recomputeMonth(newMk); }
+      else { saveMonth(mk,txns); recomputeMonth(mk); }
+      return true;
+    }
+    return false;
+  }
+  function deleteTxn(mk,id){
+    const txns=loadMonth(mk); const filtered=txns.filter(t=>t.id!==id);
+    saveMonth(mk,filtered); recomputeMonth(mk); return filtered.length!==txns.length;
+  }
+
+  // Pre-computed summary: monthly totals + all-time category totals
+  function rebuildSummary(){
+    const months=getMonthList();
+    const summary={ months:{}, allTimeCategory:{}, totalTxns:0, reviewCount:0 };
+    for(const mk of months){
+      const txns=loadMonth(mk);
+      let spent=0,income=0,cats={};
+      for(const t of txns){
+        summary.totalTxns++;
+        if(t.wasDuplicate||t.lowConfidence)summary.reviewCount++;
+        if(t.amount<0){ if(t.category!=='ccpayment'){ spent+=Math.abs(t.amount); } cats[t.category]=(cats[t.category]||0)+Math.abs(t.amount); summary.allTimeCategory[t.category]=(summary.allTimeCategory[t.category]||0)+Math.abs(t.amount); }
+        else income+=t.amount;
+      }
+      summary.months[mk]={spent,income,cats,count:txns.length,review:0};
+      let rev=0; for(const t of txns){ if(t.wasDuplicate||t.lowConfidence)rev++; }
+      summary.months[mk].review=rev;
+    }
+    LS.setItem(SUMMARY,JSON.stringify(summary));
+    return summary;
+  }
+  function getSummary(){ const s=LS.getItem(SUMMARY); return s?JSON.parse(s):rebuildSummary(); }
+
+  // Migration from old flat ledger_v1
+  function migrateFromFlat(){
+    const old=LS.getItem(PREFIX);
+    if(!old)return false;
+    let data; try{data=JSON.parse(old);}catch(e){return false;}
+    if(!data.transactions)return false;
+    // move meta
+    saveMeta({profile:data.profile,assets:data.assets||[],liabilities:data.liabilities||[],currency:data.currency||'₹',budget:data.budget||0,googleClientId:data.googleClientId||'',gmailToken:data.gmailToken||null,gmailEmail:data.gmailEmail||'',lastSync:data.lastSync||null});
+    // bucket transactions
+    if(data.transactions.length)addBatch(data.transactions);
+    // keep old key as backup but mark migrated
+    LS.setItem(PREFIX+'_migrated','1');
+    return true;
+  }
+
+  return {loadMeta,saveMeta,getMonthList,getMonth,addBatch,addOne,updateTxn,deleteTxn,rebuildSummary,getSummary,migrateFromFlat,monthKey};
+}
+
+
+</script>
+<script>
+// ════════════════ APP STATE (storage-backed) ════════════════
+let LS = window.localStorage;
+let DB = createLedgerStore(LS);   // storage manager
+let meta = { profile:null, assets:[], liabilities:[], currency:'₹', budget:0, googleClientId:'', gmailToken:null, gmailEmail:'', lastSync:null };
+let viewMonth = { y:new Date().getFullYear(), m:new Date().getMonth() }; // dashboard month
+let txType='expense', assetType='asset', activeFilter='all', pendingSignals=null;
+let sortMode='date_desc', filterFrom='', filterTo='', reviewMode=false;
+let txMode='expense', dupMode=false;
+let pendingPdfFile=null;
+let renderCache={}; // lazy tab cache
+
+function saveMeta(){ DB.saveMeta(meta); }
+function uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,6);}
+function fmt(n){return meta.currency+Math.round(Math.abs(n)).toLocaleString('en-IN');}
+function fmtSigned(n){return (n<0?'−':'+')+meta.currency+Math.round(Math.abs(n)).toLocaleString('en-IN');}
+function fmtShort(n){n=Math.abs(n);if(n>=10000000)return meta.currency+(n/10000000).toFixed(1)+'Cr';if(n>=100000)return meta.currency+(n/100000).toFixed(1)+'L';if(n>=1000)return meta.currency+(n/1000).toFixed(1)+'k';return meta.currency+Math.round(n);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function catById(id,inc){const arr=inc?INCOME_CATEGORIES:EXPENSE_CATEGORIES;return arr.find(c=>c.id===id)||arr[arr.length-1];}
+function daysSince(ts){if(!ts)return 999;return Math.floor((Date.now()-ts)/86400000);}
+function curMonthKey(){return viewMonth.y+'_'+String(viewMonth.m+1).padStart(2,'0');}
+function invalidateCache(){renderCache={};}
+
+// ════════════════ ONBOARDING ════════════════
+function setupPinInputs(){const pins=['obPin1','obPin2','obPin3','obPin4'];pins.forEach((id,i)=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',()=>{el.value=el.value.replace(/[^0-9]/g,'');if(el.value&&i<3)document.getElementById(pins[i+1]).focus();});el.addEventListener('keydown',e=>{if(e.key==='Backspace'&&!el.value&&i>0)document.getElementById(pins[i-1]).focus();});});}
+function createProfile(){const name=document.getElementById('obName').value.trim();const email=document.getElementById('obEmail').value.trim();const pin=['obPin1','obPin2','obPin3','obPin4'].map(id=>document.getElementById(id).value).join('');const err=document.getElementById('obError');if(!name){err.textContent='Please enter your name';return;}if(!email||!email.includes('@')){err.textContent='Please enter a valid email';return;}if(pin.length!==4||!/^\d{4}$/.test(pin)){err.textContent='PIN must be 4 digits';return;}meta.profile={name,email,pin,created:Date.now()};saveMeta();document.getElementById('onboard').classList.add('hidden');bootApp();}
+
+// ════════════════ BOOT + MIGRATION ════════════════
+function bootApp(){
+  document.getElementById('app').classList.add('ready');
+  document.getElementById('bottomNav').classList.remove('hidden');
+  document.getElementById('fab').classList.remove('hidden');
+  const hr=new Date().getHours();
+  document.getElementById('greetingTime').textContent=hr<12?'Good morning,':hr<17?'Good afternoon,':'Good evening,';
+  document.getElementById('greetingName').textContent=(meta.profile&&meta.profile.name||'there')+' 👋';
+  populateSelects();
+  buildFilters();
+  setMonthDisplay();
+  renderDashboard();
+  updateReviewChip();
+  document.getElementById('addDate').value=new Date().toISOString().split('T')[0];
+  renderCoverage('HDFC'); renderCoverage('SBI RuPay CC'); renderCoverage('Axis Flipkart CC'); renderCoverage('HDFC Pixel CC'); renderCoverage('HDFC IOCL CC'); renderCoverage('ICICI Amazon Pay CC'); renderCoverage('ICICI Coral CC');
+}
+function populateSelects(){document.getElementById('addCategory').innerHTML=EXPENSE_CATEGORIES.map(c=>'<option value="'+c.id+'">'+c.icon+' '+c.name+'</option>').join('');document.getElementById('assetCategory').innerHTML=ASSET_CATEGORIES.map(c=>'<option value="'+c.id+'">'+c.icon+' '+c.name+'</option>').join('');}
+function buildFilters(){const cats=txMode==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES;const row=document.getElementById('txFilters');row.innerHTML='<button class="chip active" onclick="setFilter(\'all\',this)">All</button>'+cats.map(c=>'<button class="chip" onclick="setFilter(\''+c.id+'\',this)">'+c.icon+' '+c.name+'</button>').join('');}
+function setTxMode(mode){txMode=mode;activeFilter='all';document.getElementById('modeExpense').classList.toggle('active',mode==='expense');document.getElementById('modeIncome').classList.toggle('active',mode==='income');buildFilters();if(reviewMode){reviewMode=false;document.getElementById('reviewChip').classList.remove('active');document.getElementById('reviewList').style.display='none';}if(dupMode){dupMode=false;document.getElementById('dupChip').classList.remove('active');document.getElementById('dupList').style.display='none';}renderTransactionsPage();}
+
+// ════════════════ NAV (lazy + cached) ════════════════
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+page);if(pg)pg.classList.add('active');
+  const nb=document.querySelector('.nav-btn[data-page="'+page+'"]');if(nb)nb.classList.add('active');
+  try{window.scrollTo(0,0);}catch(e){}
+  // lazy render: only compute if not cached
+  requestAnimationFrame(()=>{
+    if(page==='transactions'){ if(!renderCache.transactions){renderTransactionsPage();renderCache.transactions=true;} }
+    if(page==='wealth'){ if(!renderCache.wealth){renderWealth();renderCache.wealth=true;} }
+    if(page==='insights'){ if(!renderCache.insights){renderInsights();renderCache.insights=true;} }
+    if(page==='categories'){ renderCategoryDetail(); }
+    if(page==='dashboard'){ renderDashboard(); }
+    if(page==='sync'){ renderCoverage('HDFC'); renderCoverage('SBI RuPay CC'); renderCoverage('Axis Flipkart CC'); renderCoverage('HDFC Pixel CC'); renderCoverage('HDFC IOCL CC'); renderCoverage('ICICI Amazon Pay CC'); renderCoverage('ICICI Coral CC'); }
+  });
+}
+
+// ════════════════ MONTH ════════════════
+function setMonthDisplay(){const d=new Date(viewMonth.y,viewMonth.m,1);document.getElementById('monthDisplay').textContent=d.toLocaleString('default',{month:'long',year:'numeric'});}
+function changeMonth(dir){viewMonth.m+=dir;if(viewMonth.m>11){viewMonth.m=0;viewMonth.y++;}if(viewMonth.m<0){viewMonth.m=11;viewMonth.y--;}setMonthDisplay();renderDashboard();}
+
+// ════════════════ DASHBOARD (reads summary, not raw txns) ════════════════
+function renderDashboard(){
+  const summary=DB.getSummary();
+  const mk=curMonthKey();
+  const ms=summary.months[mk]||{spent:0,income:0,cats:{},count:0};
+  document.getElementById('heroAmount').textContent=fmt(ms.spent);
+  document.getElementById('heroSub').textContent=ms.count+' transaction'+(ms.count!==1?'s':'')+' this month';
+  document.getElementById('heroIncome').textContent=fmtShort(ms.income);
+  document.getElementById('heroExpense').textContent=fmtShort(ms.spent);
+  const netSaved=ms.income-ms.spent;const hs=document.getElementById('heroSaved');hs.textContent=(netSaved<0?'-':'+')+fmtShort(Math.abs(netSaved));hs.className='hero-fbox-val '+(netSaved<0?'net-neg':'net-pos');
+
+  // categories from month summary
+  const maxAmt=Math.max.apply(null,Object.values(ms.cats).concat([1]));
+  const sorted=EXPENSE_CATEGORIES.map(c=>Object.assign({},c,{total:ms.cats[c.id]||0})).filter(c=>c.total>0).sort((a,b)=>b.total-a.total).slice(0,5);
+  const dc=document.getElementById('dashCategories');
+  if(!sorted.length){dc.innerHTML='<div class="empty"><div class="empty-ico">◈</div><div class="empty-title">No spending yet</div><div class="empty-sub">Add a transaction or paste<br>an SMS to get started</div></div>';}
+  else{dc.innerHTML=sorted.map(c=>'<div class="cat-row"><div class="cat-ico" style="background:'+c.color+'1a">'+c.icon+'</div><div class="cat-inf"><div class="cat-nr"><span class="cat-nm">'+c.name+'</span><span class="cat-am" style="color:'+c.color+'">'+fmt(c.total)+'</span></div><div class="cat-bg"><div class="cat-fill" style="width:'+(c.total/maxAmt*100).toFixed(0)+'%;background:'+c.color+'"></div></div></div></div>').join('');}
+
+  // recent: load current month bucket, take latest 5
+  const monthTxns=DB.getMonth(mk).slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const dr=document.getElementById('dashRecent');
+  dr.innerHTML=monthTxns.length?monthTxns.map(t=>txRowHTML(t,mk)).join(''):'<div class="empty"><div class="empty-ico">≡</div><div class="empty-title">No transactions</div><div class="empty-sub">Tap + to add your first one</div></div>';
+
+  renderInsightCards(summary);
+}
+function txRowHTML(t,mk){const isInc=t.amount>0;const cat=catById(t.category,isInc);const d=new Date(t.date);const dateStr=d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});const srcMap={sms:'b-sms',gmail:'b-gmail',manual:'b-manual',statement:'b-stmt'};const srcLbl={sms:'SMS',gmail:'GMAIL',manual:'MANUAL',statement:'STMT'};return '<div class="tx'+(t.category==='ccpayment'?' ccpay':'')+'" onclick="editTx(\''+t.id+'\',\''+(mk||'')+'\')"><div class="tx-ico" style="background:'+cat.color+'1a">'+cat.icon+'</div><div class="tx-inf"><div class="tx-nm">'+esc(t.name)+'</div><div class="tx-mt"><span>'+dateStr+'</span><span class="tx-badge '+(srcMap[t.source]||'b-manual')+'">'+(srcLbl[t.source]||'MANUAL')+'</span>'+((t.wasDuplicate||t.lowConfidence)?'<span class="tx-badge b-dup">REVIEW</span>':'')+'<span>'+cat.name+'</span></div></div><div class="tx-rt"><div class="tx-am '+(isInc?'credit':'')+'">'+(isInc?'+':'−')+fmt(t.amount)+'</div></div></div>';}
+
+function renderInsightCards(summary){
+  const cards=[];
+  const mk=curMonthKey();
+  if(summary.reviewCount>0)cards.push({cls:'ins-gold',ico:'⚑',text:summary.reviewCount+' transaction'+(summary.reviewCount!==1?'s':'')+' need review — tap Review in Transactions',tag:'REVIEW'});
+  // spike vs last month
+  const lm=viewMonth.m===0?'12':String(viewMonth.m).padStart(2,'0');const ly=viewMonth.m===0?viewMonth.y-1:viewMonth.y;const lmk=ly+'_'+lm;
+  const cur=summary.months[mk],prev=summary.months[lmk];
+  if(cur&&prev){for(const cid in cur.cats){if(prev.cats[cid]&&cur.cats[cid]>prev.cats[cid]*1.2){const inc=Math.round((cur.cats[cid]/prev.cats[cid]-1)*100);cards.push({cls:'ins-yellow',ico:'⚡',text:catById(cid).name+' up '+inc+'% vs last month',tag:'ANOMALY'});break;}}}
+  if(meta.budget>0&&cur&&cur.spent>meta.budget*0.8)cards.push({cls:'ins-red',ico:'🎯',text:'Used '+Math.round(cur.spent/meta.budget*100)+'% of monthly budget',tag:'BUDGET'});
+  const stale=meta.assets.filter(a=>daysSince(a.updated)>7).length;
+  if(stale>0)cards.push({cls:'ins-green',ico:'🔔',text:stale+' asset balance'+(stale!==1?'s':'')+' not updated in 7+ days',tag:'WEALTH'});
+  const sec=document.getElementById('insightsSection');const scroll=document.getElementById('insightScroll');
+  if(!cards.length){sec.style.display='none';return;}
+  sec.style.display='block';const stack=document.getElementById('insightScroll');stack.innerHTML='<div class="insight-stack">'+cards.map(c=>'<div class="insight-rect ins-rect-'+c.cls.replace('ins-','')+'"><div class="ins-rect-ico">'+c.ico+'</div><div class="ins-rect-body"><div class="ins-rect-text">'+c.text+'</div><div class="ins-rect-tag">'+c.tag+'</div></div></div>').join('')+'</div>';
+}
+
+// ════════════════ ALL TRANSACTIONS (across months) ════════════════
+function getAllTxns(){
+  const months=DB.getMonthList();
+  let all=[];
+  for(const mk of months){ const t=DB.getMonth(mk); for(const x of t){ x._mk=mk; } all=all.concat(t); }
+  return all;
+}
+function sortTxns(txns){
+  const s=sortMode;
+  return txns.sort((a,b)=>{
+    if(s==='date_desc')return new Date(b.date)-new Date(a.date);
+    if(s==='date_asc')return new Date(a.date)-new Date(b.date);
+    if(s==='amt_desc')return Math.abs(b.amount)-Math.abs(a.amount);
+    if(s==='amt_asc')return Math.abs(a.amount)-Math.abs(b.amount);
+    if(s==='az')return (a.name||'').localeCompare(b.name||'');
+    if(s==='za')return (b.name||'').localeCompare(a.name||'');
+    return 0;
+  });
+}
+let searchTimer;
+function onSearchInput(){clearTimeout(searchTimer);searchTimer=setTimeout(renderTransactionsPage,180);}
+function setFilter(cat,btn){activeFilter=cat;document.querySelectorAll('#txFilters .chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');renderTransactionsPage();}
+
+function renderTransactionsPage(){
+  if(reviewMode){renderReviewList();return;}
+  if(dupMode){renderDupList();return;}
+  const search=(document.getElementById('searchInput').value||'').toLowerCase();
+  let txns=getAllTxns();
+  // mode filter: expense = amount<0, income = amount>0
+  txns=txns.filter(t=>txMode==='income'?t.amount>0:t.amount<0);
+  const modeCount=txns.length;
+  document.getElementById('txCount').textContent=modeCount+' '+(txMode==='income'?'income':'expense')+' record'+(modeCount!==1?'s':'');
+  if(activeFilter!=='all')txns=txns.filter(t=>t.category===activeFilter);
+  if(search)txns=txns.filter(t=>(t.name||'').toLowerCase().includes(search)||String(Math.abs(t.amount)).includes(search));
+  if(filterFrom)txns=txns.filter(t=>t.date>=filterFrom);
+  if(filterTo)txns=txns.filter(t=>t.date<=filterTo);
+  txns=sortTxns(txns);
+  const list=document.getElementById('txFullList');
+  document.getElementById('reviewList').style.display='none';
+  document.getElementById('dupList').style.display='none';
+  if(!txns.length){list.innerHTML='<div class="empty"><div class="empty-ico">≡</div><div class="empty-title">No '+(txMode==='income'?'income':'expense')+' transactions</div><div class="empty-sub">Import a statement to<br>see transactions here</div></div>';return;}
+  renderVirtualList(list,txns);
+}
+
+// ════════════════ VIRTUAL SCROLL ════════════════
+let vlistState=null;
+function renderVirtualList(container,txns){
+  // group sorted txns by date but render virtually for performance
+  const ROW=70; // px per row approx
+  const total=txns.length;
+  container.innerHTML='<div class="vlist" id="vlist"><div class="vlist-spacer" id="vspacerTop"></div><div id="vrows"></div><div class="vlist-spacer" id="vspacerBot"></div></div>';
+  const vlist=document.getElementById('vlist');
+  vlistState={txns,ROW,container};
+  // Render in date groups, but cap initial DOM. For very large lists use windowing on scroll.
+  function paint(){
+    const scrollY=window.scrollY||window.pageYOffset;
+    const top=Math.max(0, Math.floor(scrollY/ROW)-30);
+    const visible=Math.ceil(window.innerHeight/ROW)+60;
+    const end=Math.min(total, top+visible);
+    document.getElementById('vspacerTop').style.height=(top*ROW)+'px';
+    document.getElementById('vspacerBot').style.height=((total-end)*ROW)+'px';
+    let html='';let lastDate=null;
+    for(let i=top;i<end;i++){const t=txns[i];
+      if(t.date!==lastDate){ html+='<div class="date-label">'+dateLabel(t.date)+'</div>'; lastDate=t.date; }
+      html+=txRowHTML(t,t._mk);
+    }
+    document.getElementById('vrows').innerHTML=html;
+  }
+  paint();
+  // attach scroll handler (debounced via rAF)
+  let ticking=false;
+  vlistState.handler=()=>{ if(!ticking){requestAnimationFrame(()=>{paint();ticking=false;});ticking=true;} };
+  window.removeEventListener('scroll',window._vScroll||(()=>{}));
+  window._vScroll=vlistState.handler;
+  window.addEventListener('scroll',window._vScroll,{passive:true});
+}
+function dateLabel(date){const d=new Date(date);const today=new Date().toISOString().split('T')[0];const yest=new Date(Date.now()-86400000).toISOString().split('T')[0];if(date===today)return 'TODAY · '+d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});if(date===yest)return 'YESTERDAY · '+d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'});return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();}
+
+// ════════════════ REVIEW MODE (uncertain category only) ════════════════
+function updateReviewChip(){const all=getAllTxns();const rev=all.filter(t=>t.lowConfidence&&!t.wasDuplicate).length;const dup=all.filter(t=>t.wasDuplicate).length;const re=document.getElementById('reviewCount');if(re)re.textContent=rev;const de=document.getElementById('dupCount');if(de)de.textContent=dup;}
+function toggleReview(){reviewMode=!reviewMode;if(reviewMode&&dupMode){dupMode=false;document.getElementById('dupChip').classList.remove('active');document.getElementById('dupList').style.display='none';}document.getElementById('reviewChip').classList.toggle('active',reviewMode);if(reviewMode){window.removeEventListener('scroll',window._vScroll||(()=>{}));renderReviewList();}else{document.getElementById('reviewList').style.display='none';renderTransactionsPage();}}
+function renderReviewList(){
+  // uncertain-category items only (NOT duplicates), respecting income/expense mode
+  const all=getAllTxns().filter(t=>t.lowConfidence&&!t.wasDuplicate).filter(t=>txMode==='income'?t.amount>0:t.amount<0);
+  const list=document.getElementById('reviewList');const full=document.getElementById('txFullList');
+  full.innerHTML='';document.getElementById('dupList').style.display='none';list.style.display='block';
+  document.getElementById('txCount').textContent=all.length+' to review';
+  if(!all.length){list.innerHTML='<div class="empty"><div class="empty-ico">✓</div><div class="empty-title">All clear</div><div class="empty-sub">No '+(txMode==='income'?'income':'expense')+' transactions<br>need review.</div></div>';return;}
+  const cats=(txMode==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES).filter(c=>c.id!=='other'&&c.id!=='otherincome');
+  list.innerHTML=all.map(t=>{
+    const cat=catById(t.category,t.amount>0);
+    let body='<div class="review-card"><div class="review-top"><div class="review-ico" style="background:'+cat.color+'1a">'+cat.icon+'</div><div class="review-inf"><div class="review-nm">'+esc(t.name)+'</div><div class="review-mt">'+new Date(t.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+cat.name+(t.bank?' · '+esc(t.bank):'')+'</div></div><div class="review-amt" style="color:'+(t.amount>0?'var(--green)':'var(--red)')+'">'+fmtSigned(t.amount)+'</div></div><div class="review-reason">Uncertain category — please confirm</div>';
+    body+='<div class="review-cats">'+cats.map(c=>'<button class="review-cat-btn" onclick="resolveCategory(\''+t._mk+'\',\''+t.id+'\',\''+c.id+'\')">'+c.icon+' '+c.name+'</button>').join('')+'</div></div>';
+    return body;
+  }).join('');
+}
+function resolveCategory(mk,id,cat){DB.updateTxn(mk,id,{category:cat,lowConfidence:false});invalidateCache();updateReviewChip();renderReviewList();toast('✓ Moved to '+catById(cat).name,'success');}
+
+// ════════════════ DUPES MODE (side-by-side pairs) ════════════════
+function toggleDupes(){dupMode=!dupMode;if(dupMode&&reviewMode){reviewMode=false;document.getElementById('reviewChip').classList.remove('active');document.getElementById('reviewList').style.display='none';}document.getElementById('dupChip').classList.toggle('active',dupMode);if(dupMode){window.removeEventListener('scroll',window._vScroll||(()=>{}));renderDupList();}else{document.getElementById('dupList').style.display='none';renderTransactionsPage();}}
+function renderDupList(){
+  // find duplicate pairs: each flagged txn (wasDuplicate) paired with its best match
+  const all=getAllTxns().filter(t=>txMode==='income'?t.amount>0:t.amount<0);
+  const flagged=all.filter(t=>t.wasDuplicate);
+  const list=document.getElementById('dupList');const full=document.getElementById('txFullList');
+  full.innerHTML='';document.getElementById('reviewList').style.display='none';list.style.display='block';
+  document.getElementById('txCount').textContent=flagged.length+' duplicate'+(flagged.length!==1?'s':'')+' to resolve';
+  if(!flagged.length){list.innerHTML='<div class="empty"><div class="empty-ico">✓</div><div class="empty-title">No duplicates</div><div class="empty-sub">Nothing flagged as a<br>possible duplicate.</div></div>';return;}
+  list.innerHTML=flagged.map(t=>{
+    // find the most likely original (same amount, near date, not itself, not flagged)
+    let match=all.find(o=>o.id!==t.id&&!o.wasDuplicate&&Math.abs(Math.abs(o.amount)-Math.abs(t.amount))<0.5&&Math.abs((new Date(o.date)-new Date(t.date))/86400000)<=3);
+    if(!match)match=all.find(o=>o.id!==t.id&&Math.abs(Math.abs(o.amount)-Math.abs(t.amount))<0.5);
+    const cat=catById(t.category,t.amount>0);
+    const left=match||{name:t.name,date:t.date,amount:t.amount,category:t.category,bank:'—',_mk:t._mk,id:''};
+    const cardHTML=(tx,label)=>{const c=catById(tx.category,tx.amount>0);return '<div class="dup-card"><div class="dup-card-nm">'+esc(tx.name)+'</div><div class="dup-card-row">'+new Date(tx.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' · '+c.name+'</div><div class="dup-card-amt" style="color:'+(tx.amount>0?'var(--green)':'var(--red)')+'">'+fmtSigned(tx.amount)+'</div><div class="dup-card-src">'+esc(tx.bank||'—')+'</div></div>';};
+    return '<div class="dup-pair"><div class="dup-head">🔁 POSSIBLE DUPLICATE</div><div class="dup-cards">'+cardHTML(left,'L')+cardHTML(t,'R')+'</div><div class="dup-actions">'+
+      '<div class="dup-act dup-keep-l" onclick="dupKeepLeft(\''+t._mk+'\',\''+t.id+'\')">Keep Left</div>'+
+      '<div class="dup-act dup-keep-both" onclick="dupKeepBoth(\''+t._mk+'\',\''+t.id+'\')">Keep Both</div>'+
+      '<div class="dup-act dup-keep-r" onclick="dupKeepRight(\''+(match?match._mk:t._mk)+'\',\''+(match?match.id:'')+'\',\''+t._mk+'\',\''+t.id+'\')">Keep Right</div>'+
+      '</div></div>';
+  }).join('');
+}
+// Right = the flagged txn (t). Left = the match.
+function dupKeepLeft(tmk,tid){DB.deleteTxn(tmk,tid);invalidateCache();updateReviewChip();renderDupList();renderDashboard();toast('Kept left, removed duplicate','');}
+function dupKeepBoth(tmk,tid){DB.updateTxn(tmk,tid,{wasDuplicate:false});invalidateCache();updateReviewChip();renderDupList();toast('Both kept','success');}
+function dupKeepRight(lmk,lid,tmk,tid){if(lid)DB.deleteTxn(lmk,lid);DB.updateTxn(tmk,tid,{wasDuplicate:false});invalidateCache();updateReviewChip();renderDupList();renderDashboard();toast('Kept right, removed duplicate','');}
+
+// ════════════════ FILTERS / SORT ════════════════
+function openFilterSheet(){document.getElementById('filterFrom').value=filterFrom;document.getElementById('filterTo').value=filterTo;openSheet('filterSheet');}
+function setSort(mode,el){sortMode=mode;document.querySelectorAll('#sortOptions .sort-opt').forEach(o=>{o.classList.remove('active');o.querySelector('.sort-check').textContent='';});el.classList.add('active');el.querySelector('.sort-check').textContent='✓';}
+function applyFilters(){filterFrom=document.getElementById('filterFrom').value;filterTo=document.getElementById('filterTo').value;closeSheet('filterSheet');renderTransactionsPage();}
+function clearFilters(){filterFrom='';filterTo='';sortMode='date_desc';document.getElementById('filterFrom').value='';document.getElementById('filterTo').value='';document.querySelectorAll('#sortOptions .sort-opt').forEach((o,i)=>{o.classList.toggle('active',i===0);o.querySelector('.sort-check').textContent=i===0?'✓':'';});closeSheet('filterSheet');renderTransactionsPage();}
+
+// ════════════════ CATEGORIES PAGE ════════════════
+function renderCategoryDetail(){
+  const summary=DB.getSummary();
+  const mk=curMonthKey();
+  const ms=summary.months[mk]||{cats:{},spent:0};
+  const monthName=document.getElementById('monthDisplay')?document.getElementById('monthDisplay').textContent:'this month';
+  const sub=document.querySelector('#page-categories .page-subtitle');
+  if(sub)sub.textContent=monthName.toLowerCase();
+  const list=document.getElementById('catDetailList');
+  const sorted=EXPENSE_CATEGORIES.filter(c=>c.id!=='ccpayment').map(c=>Object.assign({},c,{total:ms.cats[c.id]||0})).sort((a,b)=>b.total-a.total);
+  const maxAmt=Math.max.apply(null,sorted.map(c=>c.total).concat([1]));
+  list.innerHTML=sorted.map(c=>{
+    const pct=ms.spent?Math.round(c.total/ms.spent*100):0;
+    return '<div class="asset-cat"><div class="asset-cat-head" style="cursor:default"><div class="asset-cat-ico" style="background:'+c.color+'1a">'+c.icon+'</div><div class="asset-cat-info"><div class="asset-cat-name">'+c.name+'</div><div class="asset-cat-sub">'+(c.total?fmt(c.total):'—')+'</div></div><div class="asset-cat-amt"><div class="asset-cat-val" style="color:'+(c.total?c.color:'var(--muted)')+'">'+pct+'%</div></div></div>'+(c.total?'<div style="padding:0 14px 12px"><div class="cat-bg"><div class="cat-fill" style="width:'+(c.total/maxAmt*100).toFixed(0)+'%;background:'+c.color+'"></div></div></div>':'')+'</div>';
+  }).join('');
+}
+
+// ════════════════ ADD / EDIT TX ════════════════
+function setTxType(type){txType=type;document.getElementById('toggleExpense').classList.toggle('active',type==='expense');document.getElementById('toggleIncome').classList.toggle('active',type==='income');const cats=type==='income'?INCOME_CATEGORIES:EXPENSE_CATEGORIES;document.getElementById('addCategory').innerHTML=cats.map(c=>'<option value="'+c.id+'">'+c.icon+' '+c.name+'</option>').join('');}
+function openAddSheet(){document.getElementById('editTxId').value='';document.getElementById('addSheetTitle').textContent='Add Transaction';document.getElementById('addName').value='';document.getElementById('addAmount').value='';document.getElementById('addDate').value=new Date().toISOString().split('T')[0];document.getElementById('deleteRow').innerHTML='';setTxType('expense');openSheet('addSheet');}
+function editTx(id,mk){const txns=DB.getMonth(mk);const t=txns.find(x=>x.id===id);if(!t)return;document.getElementById('editTxId').value=id+'|'+mk;document.getElementById('addSheetTitle').textContent='Edit Transaction';setTxType(t.amount>0?'income':'expense');document.getElementById('addName').value=t.name;document.getElementById('addAmount').value=Math.abs(t.amount);document.getElementById('addDate').value=t.date;document.getElementById('addCategory').value=t.category;document.getElementById('deleteRow').innerHTML='<button class="btn-ghost btn-danger" style="width:100%" onclick="deleteTxFromSheet()">Delete Transaction</button>';openSheet('addSheet');}
+function saveTransaction(){const raw=document.getElementById('editTxId').value;const name=document.getElementById('addName').value.trim();const amount=parseFloat(document.getElementById('addAmount').value);const date=document.getElementById('addDate').value;const category=document.getElementById('addCategory').value;if(!name||isNaN(amount)||amount<=0||!date){toast('Fill all fields correctly','error');return;}const signedAmt=txType==='income'?Math.abs(amount):-Math.abs(amount);
+  if(raw){const [id,mk]=raw.split('|');DB.updateTxn(mk,id,{name,amount:signedAmt,date,category,type:txType,lowConfidence:false});toast('Transaction updated','success');}
+  else{DB.addOne({id:uid(),name,amount:signedAmt,date,category,type:txType,source:'manual',addedAt:Date.now()});toast('Transaction added','success');}
+  invalidateCache();saveMeta();closeSheet('addSheet');setMonthDisplay();renderDashboard();updateReviewChip();if(document.getElementById('page-transactions').classList.contains('active'))renderTransactionsPage();}
+function deleteTxFromSheet(){const raw=document.getElementById('editTxId').value;if(!raw)return;const [id,mk]=raw.split('|');DB.deleteTxn(mk,id);invalidateCache();closeSheet('addSheet');renderDashboard();updateReviewChip();if(document.getElementById('page-transactions').classList.contains('active'))renderTransactionsPage();toast('Deleted','');}
+
+// ════════════════ PASTE / PARSE ════════════════
+function openPasteSheet(){document.getElementById('pasteText').value='';document.getElementById('parseResult').innerHTML='';document.getElementById('parseBtn').textContent='Read Text';document.getElementById('parseBtn').onclick=parseAndPreview;pendingSignals=null;openSheet('pasteSheet');}
+function parseAndPreview(){const text=document.getElementById('pasteText').value.trim();if(!text){toast('Paste some text first','error');return;}const signals=parseSMS(text);const rd=document.getElementById('parseResult');if(!signals.matched){rd.innerHTML='<div class="parse-result"><div style="text-align:center;padding:10px;color:var(--muted);font-size:12px;font-family:var(--mono)">⚠ Couldn\'t read this automatically.<br>You can add it manually instead.</div></div>';return;}pendingSignals=signals;let html='<div class="parse-result">';if(signals.transaction){const t=signals.transaction;const isInc=t.amount>0;const cat=catById(t.category,isInc);const confClass=signals.confidence>=0.8?'':'med';html+='<div class="parse-signal"><div class="signal-ico" style="background:'+cat.color+'1a">'+cat.icon+'</div><div class="signal-body"><div class="signal-title">'+(isInc?'Income':'Expense')+': '+esc(t.name)+'</div><div class="signal-detail">'+(isInc?'+':'−')+fmt(t.amount)+' · '+cat.name+' · '+t.date+'<br>'+t.bank+' '+(t.account||'')+'</div></div><span class="conf-badge '+confClass+'">'+Math.round(signals.confidence*100)+'%</span></div>';}if(signals.balanceUpdate){const b=signals.balanceUpdate;html+='<div class="parse-signal"><div class="signal-ico" style="background:rgba(74,222,128,0.12)">🏦</div><div class="signal-body"><div class="signal-title">Balance Update: '+b.bank+' '+(b.account||'')+'</div><div class="signal-detail">Updates Wealth → Bank & Cash to '+fmt(b.balance)+'</div></div></div>';}html+='</div>';rd.innerHTML=html;document.getElementById('parseBtn').textContent='Confirm & Import';document.getElementById('parseBtn').onclick=confirmImport;}
+function confirmImport(){if(!pendingSignals)return;let added=0,dup=0,balUpd=0;
+  if(pendingSignals.transaction){const t=pendingSignals.transaction;const mk=DB.monthKey(t.date);const existing=DB.getMonth(mk);const dchk=isDuplicate(t,existing);if(dchk.dup===true){dup++;}else{DB.addOne({id:uid(),name:t.name,amount:t.amount,date:t.date,category:t.category,type:t.type,source:'sms',account:t.account,bank:t.bank,rawRef:t.rawRef,addedAt:Date.now(),wasDuplicate:dchk.dup==='possible',lowConfidence:t.lowConfidence});added++;}}
+  if(pendingSignals.balanceUpdate){const b=pendingSignals.balanceUpdate;let asset=meta.assets.find(a=>a.category==='bank'&&a.account&&b.account&&a.account.slice(-4)===b.account.slice(-4));if(!asset)asset=meta.assets.find(a=>a.category==='bank'&&a.name.toLowerCase().includes(b.bank.toLowerCase()));if(asset){asset.value=b.balance;asset.updated=Date.now();balUpd++;}else{meta.assets.push({id:uid(),name:b.bank+' Account',value:b.balance,category:'bank',account:b.account,notes:'Auto from SMS',updated:Date.now()});balUpd++;}saveMeta();}
+  invalidateCache();renderDashboard();updateReviewChip();closeSheet('pasteSheet');
+  let msg=[];if(added)msg.push(added+' transaction added');if(balUpd)msg.push('balance updated');if(dup)msg.push(dup+' duplicate skipped');toast('✓ '+(msg.join(' · ')||'Done'),'success');}
+
+// ════════════════ FILE UPLOAD (CSV / XLS / PDF) + batched ════════════════
+let currentBank='HDFC';
+function handleFile(e,bank){const file=e.target.files[0];if(!file)return;currentBank=bank||'HDFC';const ext=file.name.split('.').pop().toLowerCase();if(ext==='csv'||ext==='txt')parseCSVFile(file);else if(ext==='xls'||ext==='xlsx')parseXLSFile(file);else if(ext==='pdf'){pendingPdfFile=file;parsePDFFile(file,null);}e.target.value='';}
+function splitCSV(line){const r=[];let cur='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){q=!q;}else if(ch===','&&!q){r.push(cur);cur='';}else cur+=ch;}r.push(cur);return r.map(s=>s.trim().replace(/^"|"$/g,''));}
+function showProgress(label){const w=document.getElementById('progressWrap');w.classList.add('show');document.getElementById('progressText').textContent=label;document.getElementById('progressPct').textContent='0%';document.getElementById('progressFill').style.width='0%';}
+function setProgress(pct){document.getElementById('progressPct').textContent=Math.round(pct)+'%';document.getElementById('progressFill').style.width=pct+'%';}
+function hideProgress(){setTimeout(()=>document.getElementById('progressWrap').classList.remove('show'),800);}
+
+async function importTxnsBatched(parsedTxns,sourceLabel,latestBalance,latestBalanceDate,bankHint){
+  if(!parsedTxns.length){toast('No transactions found in file','error');return;}
+  showProgress('Importing '+parsedTxns.length+' transactions...');
+  let added=0,dup=0;
+  const BATCH=500;
+  // Build dedup set from existing months touched
+  for(let i=0;i<parsedTxns.length;i+=BATCH){
+    const slice=parsedTxns.slice(i,i+BATCH);
+    const toAdd=[];
+    for(const t of slice){
+      const mk=DB.monthKey(t.date);
+      const existing=DB.getMonth(mk);
+      const dchk=isDuplicate(t,existing.concat(toAdd.filter(x=>DB.monthKey(x.date)===mk)));
+      if(dchk.dup===true){dup++;}else{toAdd.push(Object.assign({id:uid(),addedAt:Date.now(),wasDuplicate:dchk.dup==='possible',bank:currentBank},t));added++;}
+    }
+    if(toAdd.length)DB.addBatch(toAdd);
+    setProgress(Math.min(99,(i+BATCH)/parsedTxns.length*100));
+    await new Promise(r=>setTimeout(r,0)); // yield so UI doesn't freeze
+  }
+  // balance update
+  if(latestBalance!=null){let asset=meta.assets.find(a=>a.category==='bank'&&(bankHint?a.name.toLowerCase().includes(bankHint.toLowerCase()):true));if(asset){asset.value=latestBalance;asset.updated=Date.now();asset.asOfDate=latestBalanceDate||asset.asOfDate;asset.bankKey=bankHint||asset.bankKey;}else{meta.assets.push({id:uid(),name:(bankHint||'Bank')+' Account',value:latestBalance,category:'bank',notes:'Auto from statement',updated:Date.now(),asOfDate:latestBalanceDate,bankKey:bankHint});}saveMeta();}
+  setProgress(100);hideProgress();invalidateCache();renderDashboard();updateReviewChip();renderCoverage('HDFC');
+  toast('✓ '+added+' imported · '+dup+' duplicates skipped','success');
+}
+
+function parseCSVFile(file){const reader=new FileReader();reader.onload=async(e)=>{const text=e.target.result;const lines=text.split(/\r?\n/).filter(l=>l.trim());if(lines.length<2){toast('CSV looks empty','error');return;}// detect smart statement format by checking for DD/MM/YYYY pattern
+const isSmartFmt=/^\d{2}\/\d{2}\/\d{4}\s+.+\s+\d{2}\/\d{2}\/\d{4}\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}/m.test(text);
+if(isSmartFmt){const res=parseSmartStatementText(text);await importTxnsBatched(res.txns,'statement',res.latestBalance,res.latestBalanceDate,currentBank);return;}
+const header=splitCSV(lines[0]);const rows=lines.slice(1).map(splitCSV);const res=parseStatementRows(header,rows);await importTxnsBatched(res.txns,'statement',res.latestBalance,res.latestBalanceDate,currentBank);};reader.readAsText(file);}
+
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+async function parseXLSFile(file){toast('Reading Excel...','');try{if(!window.XLSX){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');}const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const sheet=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});if(!json.length){toast('Excel sheet empty','error');return;}
+  // find header row: must contain 'date' AND ('narration'/'description'/'withdrawal') to avoid metadata rows
+  let hi=json.findIndex(r=>{const s=r.map(c=>String(c).toLowerCase());return s.some(c=>/\bdate\b/i.test(c))&&s.some(c=>/narr|descr|withdrawal|deposit/i.test(c));});if(hi<0)hi=json.findIndex(r=>r.some(c=>/\bdate\b/i.test(String(c))));if(hi<0)hi=0;
+  const header=json[hi].map(String);const rows=json.slice(hi+1).map(r=>r.map(String));
+  const res=parseStatementRows(header,rows);await importTxnsBatched(res.txns,'statement',res.latestBalance,res.latestBalanceDate,currentBank);
+}catch(err){toast('Excel read failed: '+err.message,'error');}}
+
+async function parsePDFFile(file,password){toast('Reading PDF...','');try{if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
+  const buf=await file.arrayBuffer();
+  const params={data:buf};if(password)params.password=password;
+  let pdf;
+  try{pdf=await window.pdfjsLib.getDocument(params).promise;}
+  catch(err){
+    if(err&&err.name==='PasswordException'){
+      // try DIPA5523 silently for HDFC bank SmartStatements before prompting
+      if(currentBank==='HDFC'){
+        try{pdf=await window.pdfjsLib.getDocument({data:buf,password:'DIPA5523'}).promise;}
+        catch(e2){if(e2&&e2.name==='PasswordException'){pendingPdfFile=file;openSheet('passwordSheet');return;}throw e2;}
+      } else {pendingPdfFile=file;openSheet('passwordSheet');return;}
+    } else throw err;
+  }
+  let text='';for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();
+    // reconstruct lines by y-position
+    let lastY=null,line='';const lines=[];
+    for(const item of tc.items){ if(lastY!==null&&Math.abs(item.transform[5]-lastY)>3){lines.push(line);line='';} line+=item.str+' '; lastY=item.transform[5]; }
+    if(line)lines.push(line); text+=lines.join('\n')+'\n';
+  }
+  // Auto-detect HDFC Smart Statement vs regular format
+  function detectAndParseBank(text){
+    const isSmartFmt=/^\d{2}\/\d{2}\/\d{4}\s+.+\s+\d{2}\/\d{2}\/\d{4}\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}\s+[\d,]+\.\d{2}/m.test(text);
+    if(isSmartFmt)return parseSmartStatementText(text);
+    return parseStatementText(text);
+  }
+  const res=detectAndParseBank(text);
+  closeSheet('passwordSheet');pendingPdfFile=null;
+  await importTxnsBatched(res.txns,'statement',res.latestBalance,res.latestBalanceDate,currentBank);
+}catch(err){toast('PDF read failed. Try CSV export.','error');}}
+function submitPdfPassword(){const pw=document.getElementById('pdfPassword').value;if(!pw){toast('Enter password','error');return;}if(pendingPdfFile){document.getElementById('pdfPassword').value='';parsePDFFile(pendingPdfFile,pw);}}
+
+// ════════════════ CREDIT CARD IMPORT (separate path; does not touch bank import) ════════════════
+let currentCard='SBI RuPay CC';
+let pendingCardPdf=null;
+// Known auto-passwords per card (session-only; tried silently first)
+const CARD_PASSWORDS={'SBI RuPay CC':'011119905408','Axis Flipkart CC':'DIPA0111','HDFC Pixel CC':'DIPA7993','HDFC IOCL CC':'DIPA3660','ICICI Amazon Pay CC':'DIPA1990','ICICI Coral CC':'DIPA1990'};
+// pick the right parser per card
+function parseCardTextFor(card,text){
+  if(card==='Axis Flipkart CC')return parseAxisCardStatementText(text);
+  if(card==='HDFC Pixel CC'||card==='HDFC IOCL CC')return parsePixelCardStatementText(text);
+  if(card==='ICICI Amazon Pay CC'||card==='ICICI Coral CC')return parseIciciCardStatementText(text);
+  return parseCardStatementText(text); // SBI default
+}
+function handleCardFile(e,card){const file=e.target.files[0];if(!file)return;currentCard=card||'SBI RuPay CC';const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='csv'||ext==='txt')parseCardCSV(file);
+  else if(ext==='xls'||ext==='xlsx')parseCardXLS(file);
+  else if(ext==='pdf'){pendingCardPdf=file;parseCardPDF(file, CARD_PASSWORDS[currentCard]||null);}
+  e.target.value='';}
+
+async function importCardTxnsBatched(parsedTxns,cardName){
+  const card=cardName||currentCard;
+  if(!parsedTxns.length){toast('No transactions found in statement','error');return;}
+  showProgress('Importing '+parsedTxns.length+' card transactions...');
+  let added=0,dup=0;const BATCH=500;
+  for(let i=0;i<parsedTxns.length;i+=BATCH){
+    const slice=parsedTxns.slice(i,i+BATCH);const toAdd=[];
+    for(const t of slice){
+      const mk=DB.monthKey(t.date);
+      const existing=DB.getMonth(mk);
+      const dchk=isDuplicate(t,existing.concat(toAdd.filter(x=>DB.monthKey(x.date)===mk)));
+      if(dchk.dup===true){dup++;}else{toAdd.push(Object.assign({id:uid(),addedAt:Date.now(),wasDuplicate:dchk.dup==='possible',bank:card,account:card},t));added++;}
+    }
+    if(toAdd.length)DB.addBatch(toAdd);
+    setProgress(Math.min(99,(i+BATCH)/parsedTxns.length*100));
+    await new Promise(r=>setTimeout(r,0));
+  }
+  setProgress(100);hideProgress();invalidateCache();renderDashboard();updateReviewChip();renderCoverage(card);
+  toast('✓ '+added+' imported · '+dup+' duplicates skipped','success');
+}
+function parseCardCSV(file){const card=currentCard;const reader=new FileReader();reader.onload=async(e)=>{const lines=e.target.result.split(/\r?\n/).filter(l=>l.trim());if(!lines.length){toast('CSV looks empty','error');return;}const res=parseCardTextFor(card,lines.join('\n'));await importCardTxnsBatched(res.txns,card);};reader.readAsText(file);}
+async function parseCardXLS(file){toast('Reading Excel...','');try{if(!window.XLSX){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');}const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});const sheet=wb.Sheets[wb.SheetNames[0]];const json=XLSX.utils.sheet_to_json(sheet,{header:1,defval:''});
+  // join each row into a line so the card text parser can read it
+  const text=json.map(r=>r.join(' ')).join('\n');
+  const res=parseCardTextFor(currentCard,text);await importCardTxnsBatched(res.txns,currentCard);
+}catch(err){toast('Excel read failed: '+err.message,'error');}}
+async function parseCardPDF(file,password){toast('Reading card statement...','');try{if(!window.pdfjsLib){await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}
+  const buf=await file.arrayBuffer();
+  const params={data:buf};if(password)params.password=password;
+  let pdf;
+  try{pdf=await window.pdfjsLib.getDocument(params).promise;}
+  catch(err){ if(err&&err.name==='PasswordException'){ pendingCardPdf=file; openSheet('cardPasswordSheet'); return; } throw err; }
+  let text='';for(let p=1;p<=pdf.numPages;p++){const page=await pdf.getPage(p);const tc=await page.getTextContent();
+    let lastY=null,line='';const lines=[];
+    for(const item of tc.items){ if(lastY!==null&&Math.abs(item.transform[5]-lastY)>3){lines.push(line);line='';} line+=item.str+' '; lastY=item.transform[5]; }
+    if(line)lines.push(line); text+=lines.join('\n')+'\n';
+  }
+  const res=parseCardTextFor(currentCard,text);
+  closeSheet('cardPasswordSheet');pendingCardPdf=null;
+  await importCardTxnsBatched(res.txns,currentCard);
+}catch(err){toast('Card statement read failed. Try CSV export.','error');}}
+function submitCardPdfPassword(){const pw=document.getElementById('cardPdfPassword').value;if(!pw){toast('Enter password','error');return;}if(pendingCardPdf){document.getElementById('cardPdfPassword').value='';parseCardPDF(pendingCardPdf,pw);}}
+
+
+// ════════════════ WEALTH ════════════════
+function setAssetType(type){assetType=type;document.getElementById('toggleAsset').classList.toggle('active',type==='asset');document.getElementById('toggleLiab').classList.toggle('active',type==='liability');const cats=type==='liability'?LIABILITY_CATEGORIES:ASSET_CATEGORIES;document.getElementById('assetCategory').innerHTML=cats.map(c=>'<option value="'+c.id+'">'+c.icon+' '+c.name+'</option>').join('');}
+function openAssetSheet(){document.getElementById('editAssetId').value='';document.getElementById('assetSheetTitle').textContent='Add Asset';document.getElementById('assetName').value='';document.getElementById('assetValue').value='';document.getElementById('assetNotes').value='';document.getElementById('assetDeleteRow').innerHTML='';setAssetType('asset');openSheet('assetSheet');}
+function editAsset(id,isLiab){const arr=isLiab?meta.liabilities:meta.assets;const a=arr.find(x=>x.id===id);if(!a)return;document.getElementById('editAssetId').value=(isLiab?'L:':'A:')+id;document.getElementById('assetSheetTitle').textContent=isLiab?'Edit Liability':'Edit Asset';setAssetType(isLiab?'liability':'asset');document.getElementById('assetName').value=a.name;document.getElementById('assetValue').value=a.value;document.getElementById('assetNotes').value=a.notes||'';document.getElementById('assetCategory').value=a.category;document.getElementById('assetDeleteRow').innerHTML='<button class="btn-ghost btn-danger" style="width:100%" onclick="deleteAsset(\''+id+'\','+(isLiab?'true':'false')+')">Delete</button>';openSheet('assetSheet');}
+function saveAsset(){const idRaw=document.getElementById('editAssetId').value;const name=document.getElementById('assetName').value.trim();const value=parseFloat(document.getElementById('assetValue').value);const category=document.getElementById('assetCategory').value;const notes=document.getElementById('assetNotes').value.trim();if(!name||isNaN(value)){toast('Enter name and value','error');return;}
+  if(idRaw){const isLiab=idRaw.startsWith('L:');const id=idRaw.slice(2);const arr=isLiab?meta.liabilities:meta.assets;const a=arr.find(x=>x.id===id);if(a&&((isLiab&&assetType==='asset')||(!isLiab&&assetType==='liability'))){const fromArr=isLiab?meta.liabilities:meta.assets;fromArr.splice(fromArr.indexOf(a),1);(assetType==='liability'?meta.liabilities:meta.assets).push({id,name,value:Math.abs(value),category,notes,updated:Date.now()});}else if(a){a.name=name;a.value=Math.abs(value);a.category=category;a.notes=notes;a.updated=Date.now();}toast('Updated','success');}
+  else{const obj={id:uid(),name,value:Math.abs(value),category,notes,updated:Date.now()};if(assetType==='liability')meta.liabilities.push(obj);else meta.assets.push(obj);toast('Added','success');}
+  saveMeta();renderCache.wealth=false;closeSheet('assetSheet');renderWealth();renderCache.wealth=true;}
+function deleteAsset(id,isLiab){if(!confirm('Delete this?'))return;if(isLiab)meta.liabilities=meta.liabilities.filter(x=>x.id!==id);else meta.assets=meta.assets.filter(x=>x.id!==id);saveMeta();closeSheet('assetSheet');renderWealth();toast('Deleted','');}
+function setRing(id,len,C,offset){const el=document.getElementById(id);if(el){el.setAttribute('stroke-dasharray',len+' '+(C-len));el.setAttribute('stroke-dashoffset',offset);}}
+function renderWealth(){const totalAssets=meta.assets.reduce((s,a)=>s+a.value,0);const totalLiab=meta.liabilities.reduce((s,a)=>s+a.value,0);document.getElementById('nwAmount').textContent=fmt(totalAssets-totalLiab);document.getElementById('nwAssets').textContent=fmtShort(totalAssets);document.getElementById('nwLiab').textContent='−'+fmtShort(totalLiab);
+  // "as of" date = most recent statement closing-balance date among bank assets, else last manual update
+  const asOfDates=meta.assets.map(a=>a.asOfDate).filter(Boolean).sort();
+  const lastAsOf=asOfDates.length?asOfDates[asOfDates.length-1]:null;
+  if(lastAsOf){document.getElementById('nwUpdated').textContent='as of '+new Date(lastAsOf).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+  else {const lastUpd=Math.max.apply(null,meta.assets.map(a=>a.updated||0).concat(meta.liabilities.map(a=>a.updated||0)).concat([0]));document.getElementById('nwUpdated').textContent=lastUpd?('Last updated · '+new Date(lastUpd).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})):'No assets added yet';}
+  renderNetWorthTrend();
+  const liq={instant:0,semi:0,locked:0};meta.assets.forEach(a=>{const cat=ASSET_CATEGORIES.find(c=>c.id===a.category);if(cat)liq[cat.liquidity]+=a.value;});const liqTotal=liq.instant+liq.semi+liq.locked;if(liqTotal>0){document.getElementById('liqSection').style.display='block';const C=2*Math.PI*34;const f1=liq.instant/liqTotal,f2=liq.semi/liqTotal,f3=liq.locked/liqTotal;setRing('liqRing1',f1*C,C,0);setRing('liqRing2',f2*C,C,-f1*C);setRing('liqRing3',f3*C,C,-(f1+f2)*C);document.getElementById('liqPct').textContent=Math.round(f1*100)+'%';document.getElementById('liqInstant').textContent=fmtShort(liq.instant);document.getElementById('liqSemi').textContent=fmtShort(liq.semi);document.getElementById('liqLocked').textContent=fmtShort(liq.locked);}else{document.getElementById('liqSection').style.display='none';}
+  const al=document.getElementById('assetsList');if(!meta.assets.length){al.innerHTML='<div class="empty"><div class="empty-ico">◆</div><div class="empty-title">No assets yet</div><div class="empty-sub">Add your bank balance, FDs,<br>stocks, gold and more</div></div>';}else{const byCat={};meta.assets.forEach(a=>{(byCat[a.category]=byCat[a.category]||[]).push(a);});al.innerHTML=ASSET_CATEGORIES.filter(c=>byCat[c.id]).map(c=>{const items=byCat[c.id];const sum=items.reduce((s,a)=>s+a.value,0);const pct=totalAssets?Math.round(sum/totalAssets*100):0;return '<div class="asset-cat" id="ac-'+c.id+'"><div class="asset-cat-head" onclick="toggleAssetCat(\''+c.id+'\')"><div class="asset-cat-ico" style="background:'+c.color+'1a">'+c.icon+'</div><div class="asset-cat-info"><div class="asset-cat-name">'+c.name+'</div><div class="asset-cat-sub">'+items.length+' item'+(items.length!==1?'s':'')+' · '+c.liquidity+'</div></div><div class="asset-cat-amt"><div class="asset-cat-val">'+fmt(sum)+'</div><div class="asset-cat-pct">'+pct+'% of assets</div></div><span class="asset-cat-chev">▸</span></div><div class="asset-items">'+items.map(a=>{const refDate=a.asOfDate||null;const days=refDate?daysSince(new Date(refDate).getTime()):daysSince(a.updated);const badge=refDate?('<span class="asof">as of '+new Date(refDate).toLocaleDateString("en-IN",{day:"2-digit",month:"short"})+'</span>'+(days>60?' <span class="stale">'+days+'D OLD ⚠</span>':days<=2?' <span class="fresh">FRESH</span>':'')):(days<=2?'<span class="fresh">FRESH</span>':days<=7?'':'<span class="stale">'+days+'D AGO</span>');const isBank=c.id==='bank';return '<div class="asset-item'+(isBank?' tappable':'')+'"'+(isBank?' onclick="openAccountGraph(\''+a.id+'\')"':'')+'><div class="asset-item-inf"><div class="asset-item-name">'+esc(a.name)+'</div><div class="asset-item-meta">'+(a.notes?esc(a.notes)+' ':'')+badge+(isBank?' · tap for graph':'')+'</div></div><div class="asset-item-rt"><div class="asset-item-val">'+fmt(a.value)+'</div></div><div class="edit-dot" onclick="event.stopPropagation();editAsset(\''+a.id+'\',false)">✎</div></div>';}).join('')+'</div></div>';}).join('');}
+  const ls=document.getElementById('liabSection');const ll=document.getElementById('liabList');if(!meta.liabilities.length){ls.style.display='none';}else{ls.style.display='block';const byCat={};meta.liabilities.forEach(a=>{(byCat[a.category]=byCat[a.category]||[]).push(a);});ll.innerHTML=LIABILITY_CATEGORIES.filter(c=>byCat[c.id]).map(c=>{const items=byCat[c.id];const sum=items.reduce((s,a)=>s+a.value,0);return '<div class="asset-cat"><div class="asset-cat-head" style="cursor:default"><div class="asset-cat-ico" style="background:'+c.color+'1a">'+c.icon+'</div><div class="asset-cat-info"><div class="asset-cat-name">'+c.name+'</div><div class="asset-cat-sub">'+items.length+' item'+(items.length!==1?'s':'')+'</div></div><div class="asset-cat-amt"><div class="asset-cat-val" style="color:var(--red)">−'+fmt(sum)+'</div></div></div><div class="asset-items" style="display:block">'+items.map(a=>'<div class="asset-item"><div class="asset-item-inf"><div class="asset-item-name">'+esc(a.name)+'</div><div class="asset-item-meta">'+(a.notes?esc(a.notes):'')+'</div></div><div class="asset-item-rt"><div class="asset-item-val liab">−'+fmt(a.value)+'</div></div><div class="edit-dot" onclick="editAsset(\''+a.id+'\',true)">✎</div></div>').join('')+'</div></div>';}).join('');}}
+function toggleAssetCat(id){const el=document.getElementById('ac-'+id);if(el)el.classList.toggle('expanded');}
+
+// Net Worth Trend: end-of-month bank balance (from statement balances) summed across bank accounts
+function renderNetWorthTrend(){
+  const card=document.getElementById('nwTrendCard');
+  // Build month-end total bank balance from transaction balanceAfter points
+  const all=getAllTxns().filter(t=>typeof t.balanceAfter==='number'&&t.source==='statement');
+  if(all.length<2){card.style.display='none';return;}
+  // group by bank → by month → last balanceAfter that month (end-of-month)
+  const byBankMonth={};
+  for(const t of all){
+    const bk=t.bank||'HDFC';const mk=t.date.substring(0,7);
+    byBankMonth[bk]=byBankMonth[bk]||{};
+    const cur=byBankMonth[bk][mk];
+    if(!cur||t.date>cur.date||(t.date===cur.date))byBankMonth[bk][mk]={date:t.date,bal:t.balanceAfter};
+  }
+  // collect all months present
+  const monthsSet=new Set();Object.values(byBankMonth).forEach(mm=>Object.keys(mm).forEach(m=>monthsSet.add(m)));
+  const months=[...monthsSet].sort();
+  if(months.length<2){card.style.display='none';return;}
+  // for each month, sum the latest known balance per bank up to that month (carry forward)
+  const totals=months.map(mk=>{let sum=0;for(const bk in byBankMonth){
+    // latest month <= mk
+    const ms=Object.keys(byBankMonth[bk]).filter(m=>m<=mk).sort();
+    if(ms.length)sum+=byBankMonth[bk][ms[ms.length-1]].bal;
+  }return sum;});
+  card.style.display='block';
+  document.getElementById('nwTrendAmt').textContent=fmt(totals[totals.length-1])+' latest';
+  const maxT=Math.max.apply(null,totals.concat([1]));const minT=Math.min.apply(null,totals);
+  const monthNames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('nwTrendBars').innerHTML=months.map((mk,i)=>{const range=maxT-minT||1;const h=Math.max(((totals[i]-minT)/range)*72+8,8);const isLast=i===months.length-1;const mn=monthNames[+mk.split('_')[1]];return '<div class="bar-col"><div class="bar" style="height:'+h+'px;background:'+(isLast?'linear-gradient(180deg,#e8960c,#c47009)':'rgba(196,112,9,0.25)')+'"></div><div class="bar-lbl" style="'+(isLast?'color:var(--gold);font-weight:700':'')+'">'+mn+'</div></div>';}).join('');
+}
+
+// Per-account balance line graph (end-of-day balance from statement points)
+function openAccountGraph(assetId){
+  const a=meta.assets.find(x=>x.id===assetId);if(!a)return;
+  document.getElementById('acctSheetTitle').textContent=a.name;
+  const bankKey=a.bankKey||a.name.replace(/ Account$/,'').trim();
+  // gather all statement txns for this bank with balanceAfter
+  let pts=getAllTxns().filter(t=>typeof t.balanceAfter==='number'&&((t.bank||'HDFC')===bankKey||(t.bank||'HDFC')===a.bankKey));
+  // end-of-day balance: last txn per date
+  const byDay={};for(const t of pts){if(!byDay[t.date]||t.addedAt>=(byDay[t.date].addedAt||0))byDay[t.date]={date:t.date,bal:t.balanceAfter,addedAt:t.addedAt||0};}
+  const series=Object.values(byDay).sort((x,y)=>new Date(x.date)-new Date(y.date));
+  const graph=document.getElementById('acctGraph');const stats=document.getElementById('acctStats');
+  if(series.length<2){graph.innerHTML='<div class="graph-empty">Not enough data yet.<br>Upload more statement months to see the balance trend.</div>';stats.innerHTML='';document.getElementById('acctSheetSub').textContent='current balance '+fmt(a.value);openSheet('acctSheet');return;}
+  document.getElementById('acctSheetSub').textContent=series.length+' data points · '+new Date(series[0].date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' – '+new Date(series[series.length-1].date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'});
+  graph.innerHTML=sparklineSVG(series);
+  const bals=series.map(s=>s.bal);const max=Math.max.apply(null,bals),min=Math.min.apply(null,bals);
+  const maxPt=series.find(s=>s.bal===max),minPt=series.find(s=>s.bal===min);
+  stats.innerHTML='<div class="acct-stat"><span>Highest</span><b>'+fmt(max)+' · '+new Date(maxPt.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+'</b></div>'+
+    '<div class="acct-stat"><span>Lowest</span><b>'+fmt(min)+' · '+new Date(minPt.date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+'</b></div>'+
+    '<div class="acct-stat"><span>Latest</span><b>'+fmt(series[series.length-1].bal)+' · '+new Date(series[series.length-1].date).toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+'</b></div>';
+  openSheet('acctSheet');
+}
+function sparklineSVG(series){
+  const W=300,H=120,pad=8;
+  const bals=series.map(s=>s.bal);const max=Math.max.apply(null,bals),min=Math.min.apply(null,bals);const range=max-min||1;
+  const n=series.length;
+  const x=i=>pad+(i/(n-1))*(W-2*pad);
+  const y=v=>pad+(1-(v-min)/range)*(H-2*pad);
+  let path='';for(let i=0;i<n;i++){path+=(i===0?'M':'L')+x(i).toFixed(1)+' '+y(bals[i]).toFixed(1)+' ';}
+  // area fill
+  let area=path+'L'+x(n-1).toFixed(1)+' '+(H-pad)+' L'+x(0).toFixed(1)+' '+(H-pad)+' Z';
+  return '<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="display:block"><defs><linearGradient id="gfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="rgba(196,112,9,0.25)"/><stop offset="100%" stop-color="rgba(196,112,9,0)"/></linearGradient></defs><path d="'+area+'" fill="url(#gfill)"/><path d="'+path+'" fill="none" stroke="#c47009" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+// ════════════════ INSIGHTS ════════════════
+function renderInsights(){const summary=DB.getSummary();const months=[];const now=new Date(viewMonth.y,viewMonth.m,1);for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({mk:d.getFullYear()+'_'+String(d.getMonth()+1).padStart(2,'0'),lbl:d.toLocaleString('default',{month:'short'})});}const totals=months.map(mo=>(summary.months[mo.mk]||{spent:0}).spent);const maxT=Math.max.apply(null,totals.concat([1]));document.getElementById('trendAmount').textContent=fmt(totals[5]||0)+' this month';document.getElementById('trendBars').innerHTML=months.map((mo,i)=>{const h=Math.max(totals[i]/maxT*72,4);const isCur=i===5;return '<div class="bar-col"><div class="bar" style="height:'+h+'px;background:'+(isCur?'linear-gradient(180deg,#e8960c,#c47009)':'rgba(196,112,9,0.25)')+'"></div><div class="bar-lbl" style="'+(isCur?'color:var(--gold);font-weight:700':'')+'">'+mo.lbl+'</div></div>';}).join('');
+  const an=[];const mk=curMonthKey();const cur=summary.months[mk];const lm=viewMonth.m===0?'12':String(viewMonth.m).padStart(2,'0');const ly=viewMonth.m===0?viewMonth.y-1:viewMonth.y;const prev=summary.months[ly+'_'+lm];
+  if(cur&&prev){for(const cid in cur.cats){if(prev.cats[cid]&&cur.cats[cid]>prev.cats[cid]*1.2){const inc=Math.round((cur.cats[cid]/prev.cats[cid]-1)*100);an.push({cls:'an-w',ico:'⚡',title:catById(cid).name+' up '+inc+'%',desc:'You spent '+fmt(cur.cats[cid])+' this month vs '+fmt(prev.cats[cid])+' last month.'});}}}
+  if(summary.reviewCount>0)an.push({cls:'an-g',ico:'⚑',title:summary.reviewCount+' to review',desc:'Open the Review filter in Transactions to confirm categories and duplicates.'});
+  const stale=meta.assets.filter(a=>daysSince(a.updated)>7);if(stale.length)an.push({cls:'an-s',ico:'🔔',title:stale.length+' stale balance'+(stale.length!==1?'s':''),desc:'Update '+stale.map(a=>a.name).slice(0,2).join(', ')+(stale.length>2?' and others':'')+' to keep net worth accurate.'});
+  if(meta.budget>0&&cur){const pct=Math.round(cur.spent/meta.budget*100);an.push({cls:pct>100?'an-r':'an-s',ico:'🎯',title:'Budget: '+pct+'% used',desc:'You\'ve spent '+fmt(cur.spent)+' of your '+fmt(meta.budget)+' monthly budget.'});}
+  const list=document.getElementById('anomalyList');list.innerHTML=an.length?an.map(a=>'<div class="an-card '+a.cls+'"><div class="an-ico">'+a.ico+'</div><div><div class="an-title">'+a.title+'</div><div class="an-desc">'+a.desc+'</div></div></div>').join(''):'<div class="empty"><div class="empty-ico">◎</div><div class="empty-title">No insights yet</div><div class="empty-sub">Add more transactions to<br>unlock spending patterns</div></div>';}
+
+// ════════════════ GMAIL ════════════════
+const GMAIL_SCOPES='https://www.googleapis.com/auth/gmail.readonly';
+function renderCoverage(bank){
+  const el=document.getElementById('coverage-'+bank);if(!el)return;
+  const summary=DB.getSummary();
+  // collect months belonging to this bank by scanning each month bucket
+  const months=DB.getMonthList().sort(); // ascending YYYY_MM
+  const rows=[];
+  for(const mk of months){
+    const txns=DB.getMonth(mk).filter(t=>(t.bank||'HDFC')===bank);
+    if(txns.length>0){const [y,m]=mk.split('_');rows.push({y:+y,m:+m,mk,count:txns.length});}
+  }
+  if(!rows.length){el.innerHTML='<div class="coverage-title">Data Coverage</div><div class="coverage-empty">No statements uploaded yet</div>';return;}
+  const monthNames=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let html='<div class="coverage-title">Data Coverage</div><div class="coverage-table"><div class="coverage-row head"><span>Month</span><span>Transactions</span></div>';
+  for(let i=0;i<rows.length;i++){
+    const r=rows[i];
+    html+='<div class="coverage-row"><span class="coverage-month">'+monthNames[r.m]+' '+r.y+'</span><span class="coverage-count">'+r.count+' txns</span></div>';
+    // gap detection: if next row is more than 1 month ahead, flag missing
+    if(i<rows.length-1){
+      const next=rows[i+1];
+      const monthsBetween=(next.y-r.y)*12+(next.m-r.m);
+      if(monthsBetween>1){
+        const miss=[];let yy=r.y,mm=r.m;
+        for(let g=1;g<monthsBetween;g++){mm++;if(mm>12){mm=1;yy++;}miss.push(monthNames[mm]+' '+yy);}
+        html+='<div class="coverage-gap">⚠ Missing: '+miss.join(', ')+'</div>';
+      }
+    }
+  }
+  html+='</div>';
+  el.innerHTML=html;
+}
+function checkGmail(){/* Gmail removed in this version */}
+function connectGmail(){if(!meta.googleClientId){toast('Set Google Client ID in Settings first','error');openSettingsSheet();return;}const params=new URLSearchParams({client_id:meta.googleClientId,redirect_uri:window.location.href.split('#')[0],response_type:'token',scope:GMAIL_SCOPES,include_granted_scopes:'true',prompt:'select_account'});window.location.href='https://accounts.google.com/o/oauth2/v2/auth?'+params.toString();}
+function handleOAuthCallback(){const hash=window.location.hash.substring(1);if(!hash.includes('access_token'))return;const params=new URLSearchParams(hash);const token=params.get('access_token');if(!token)return;meta.gmailToken=token;window.history.replaceState({},document.title,window.location.pathname);fetch('https://www.googleapis.com/gmail/v1/users/me/profile',{headers:{Authorization:'Bearer '+token}}).then(r=>r.json()).then(data=>{meta.gmailEmail=data.emailAddress||'Connected';saveMeta();checkGmail();toast('✓ Gmail connected','success');setTimeout(()=>syncGmail(false),500);}).catch(()=>{meta.gmailEmail='Connected';saveMeta();checkGmail();});}
+function disconnectGmail(){meta.gmailToken=null;meta.gmailEmail='';saveMeta();checkGmail();toast('Gmail disconnected','');}
+async function gmailFetch(path){const res=await fetch('https://www.googleapis.com'+path,{headers:{Authorization:'Bearer '+meta.gmailToken}});if(res.status===401)throw new Error('UNAUTHORIZED');if(!res.ok)throw new Error('HTTP '+res.status);return res.json();}
+function getEmailBody(msg){const parts=[];function ex(p){if(p.body&&p.body.data)parts.push(atob(p.body.data.replace(/-/g,'+').replace(/_/g,'/')));if(p.parts)p.parts.forEach(ex);}ex(msg.payload);return parts.join(' ');}
+function getHeader(msg,name){const h=(msg.payload&&msg.payload.headers||[]).find(h=>h.name.toLowerCase()===name.toLowerCase());return h?h.value:'';}
+async function syncGmail(silent){if(!meta.gmailToken){if(!silent)toast('Connect Gmail first','error');return;}if(!silent)toast('Syncing Gmail...','');try{const q='subject:(transaction OR debited OR credited OR spent OR payment OR deposited)';const res=await gmailFetch('/gmail/v1/users/me/messages?maxResults=60&q='+encodeURIComponent(q));const ids=(res.messages||[]).map(m=>m.id);let added=0,dup=0;const toAdd=[];for(const id of ids){const msg=await gmailFetch('/gmail/v1/users/me/messages/'+id+'?format=full');const body=getHeader(msg,'subject')+' '+getEmailBody(msg);const signals=parseSMS(body);if(!signals.matched||!signals.transaction)continue;const t=signals.transaction;const mk=DB.monthKey(t.date);const existing=DB.getMonth(mk);const dchk=isDuplicate(Object.assign({gmailId:id},t),existing);if(dchk.dup===true){dup++;}else{toAdd.push({id:uid(),name:t.name,amount:t.amount,date:t.date,category:t.category,type:t.type,source:'gmail',gmailId:id,account:t.account,bank:t.bank,rawRef:t.rawRef,addedAt:Date.now(),wasDuplicate:dchk.dup==='possible',lowConfidence:t.lowConfidence});added++;}}if(toAdd.length)DB.addBatch(toAdd);meta.lastSync=Date.now();saveMeta();invalidateCache();renderDashboard();updateReviewChip();toast('✓ '+added+' imported · '+dup+' duplicates','success');}catch(e){if(e.message==='UNAUTHORIZED'){disconnectGmail();toast('Session expired. Reconnect.','error');}else{toast('Sync failed: '+e.message,'error');}}}
+
+// ════════════════ SETTINGS ════════════════
+function openSettingsSheet(){document.getElementById('setClientId').value=meta.googleClientId||'';document.getElementById('setName').value=meta.profile&&meta.profile.name||'';document.getElementById('setBudget').value=meta.budget||'';openSheet('settingsSheet');}
+function saveSettings(){meta.googleClientId=document.getElementById('setClientId').value.trim();const nm=document.getElementById('setName').value.trim();if(nm&&meta.profile){meta.profile.name=nm;document.getElementById('greetingName').textContent=nm+' 👋';}meta.budget=parseFloat(document.getElementById('setBudget').value)||0;saveMeta();invalidateCache();closeSheet('settingsSheet');renderDashboard();toast('Settings saved','success');}
+function clearTransactionsOnly(){if(!confirm('This will delete ALL transactions but KEEP your profile, assets, liabilities and settings. Use this to clear bad imported data and re-import cleanly. Continue?'))return;const keys=[];for(let i=0;i<LS.length;i++){const k=LS.key(i);if(k&&(k.startsWith('ledger_v1_txn_')||k==='ledger_v1_summary'||k==='ledger_v1_index'))keys.push(k);}keys.forEach(k=>LS.removeItem(k));invalidateCache();DB.rebuildSummary();renderDashboard();updateReviewChip();toast('✓ Transactions cleared. Profile & wealth kept.','success');}
+function clearAllData(){if(!confirm('Delete ALL data permanently? This cannot be undone.'))return;const keys=[];for(let i=0;i<LS.length;i++){const k=LS.key(i);if(k&&k.startsWith('ledger_v1'))keys.push(k);}keys.forEach(k=>LS.removeItem(k));location.reload();}
+
+// ════════════════ EXPORT ════════════════
+function exportData(){const all=getAllTxns().sort((a,b)=>new Date(b.date)-new Date(a.date));const rows=[['Date','Name','Amount','Type','Category','Source']];all.forEach(t=>{const cat=catById(t.category,t.amount>0).name;rows.push([t.date,t.name,t.amount,t.amount>0?'income':'expense',cat,t.source]);});const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ledger-export.csv';a.click();URL.revokeObjectURL(url);toast('✓ Exported','success');}
+
+// ════════════════ SHEETS / TOAST ════════════════
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+document.addEventListener('click',e=>{if(e.target.classList&&e.target.classList.contains('sheet-overlay'))e.target.classList.remove('open');});
+let toastTimer;function toast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show'+(type?' '+type:'');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+
+// ════════════════ INIT + MIGRATION ════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  handleOAuthCallback();
+  // Migration: if old flat ledger_v1 exists and not yet migrated, convert
+  const oldFlat=LS.getItem('ledger_v1');
+  const migrated=LS.getItem('ledger_v1_migrated');
+  if(oldFlat && !migrated){
+    try{ const parsed=JSON.parse(oldFlat); if(parsed && parsed.transactions){ DB.migrateFromFlat(); } }catch(e){}
+  }
+  meta=DB.loadMeta();
+  setupPinInputs();
+  if(meta.profile){document.getElementById('onboard').classList.add('hidden');bootApp();}
+});
+</script>
+</body>
+</html>
